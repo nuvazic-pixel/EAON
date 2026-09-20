@@ -1,0 +1,48 @@
+{
+  "version": "0.1",
+  "principle": "Observed evidence and hypotheses are stored separately. No hypothesis is treated as identity.",
+  "node_schema": {
+    "id": "stable identifier",
+    "label": "human-readable name",
+    "type": [
+      "core",
+      "domain",
+      "project",
+      "preference",
+      "observation",
+      "hypothesis"
+    ],
+    "confidence": "0..1; epistemic confidence, not personality score",
+    "stability": "how persistent the item appears over time",
+    "evidence": "short provenance summary",
+    "sensitivity": [
+      "low",
+      "medium",
+      "high"
+    ]
+  },
+  "edge_schema": {
+    "source": "node id",
+    "target": "node id",
+    "relation": [
+      "contains",
+      "supports",
+      "enables",
+      "expressed_as",
+      "contradicts",
+      "evolves_into"
+    ],
+    "weight": "0..1 strength of observed relation",
+    "confidence": "0..1 confidence in the relation"
+  },
+  "future_fields": [
+    "first_seen",
+    "last_seen",
+    "evidence_count",
+    "contradiction_count",
+    "source_refs",
+    "decay_rate",
+    "outcome_feedback",
+    "supersedes"
+  ]
+}

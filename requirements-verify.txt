@@ -1,0 +1,16 @@
+# Tested consolidation environment: Python 3.12+ (NumPy requirement).
+# No model weights or GPU libraries required.
+pytest==9.1.1
+requests==2.34.2
+structlog==26.1.0
+python-dotenv==1.2.3
+SQLAlchemy==2.0.54
+psycopg[binary]==3.3.6
+pgvector==0.5.0
+numpy==2.5.3
+pydantic==2.13.5
+pydantic-settings==2.15.0
+fastapi==0.141.1
+httpx==0.28.1
+typer==0.27.2
+rich==14.3.4

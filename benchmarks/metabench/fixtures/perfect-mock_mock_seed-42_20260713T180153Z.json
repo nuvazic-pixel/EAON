@@ -1,0 +1,673 @@
+{
+  "metadata": {
+    "model": "perfect-mock",
+    "provider": "mock",
+    "seed": 42,
+    "generated_at_utc": "2026-07-13T18:01:53.713490+00:00",
+    "benchmark": "EAON MetaBench MVP",
+    "version": "0.1.0"
+  },
+  "summary": {
+    "total_cases": 24,
+    "overall_score": 0.999975,
+    "accuracy": 1.0,
+    "calibration_score": 0.9999,
+    "abstention_precision": 1.0,
+    "abstention_recall": 1.0,
+    "abstention_f1": 1.0,
+    "recovery_adaptation_score": 1,
+    "parse_rate": 1.0,
+    "median_latency_ms": 1.0,
+    "p95_latency_ms": 1.0,
+    "total_prompt_tokens": null,
+    "total_completion_tokens": null,
+    "categories": {
+      "contradiction_detection": {
+        "count": 8,
+        "accuracy": 1,
+        "calibration": 0.9999,
+        "median_latency_ms": 1.0
+      },
+      "error_repair": {
+        "count": 4,
+        "accuracy": 1,
+        "calibration": 0.9999,
+        "median_latency_ms": 1.0
+      },
+      "insufficient_information": {
+        "count": 8,
+        "accuracy": 1,
+        "calibration": 0.9999,
+        "median_latency_ms": 1.0
+      },
+      "rule_shift": {
+        "count": 4,
+        "accuracy": 1,
+        "calibration": 0.9999,
+        "median_latency_ms": 1.0
+      }
+    }
+  },
+  "results": [
+    {
+      "case_id": "contradiction-0014",
+      "category": "contradiction_detection",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "INCONSISTENT"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "INCONSISTENT",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"INCONSISTENT\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "age_a": 29,
+        "age_b": 26
+      }
+    },
+    {
+      "case_id": "consistent-0015",
+      "category": "contradiction_detection",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "CONSISTENT"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "CONSISTENT",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"CONSISTENT\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "value": 13
+      }
+    },
+    {
+      "case_id": "sufficient-0013",
+      "category": "insufficient_information",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "14"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "14",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"14\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "blue": 8,
+        "red": 6
+      }
+    },
+    {
+      "case_id": "insufficient-0000",
+      "category": "insufficient_information",
+      "expected_decision": "abstain",
+      "accepted_answers": [],
+      "model_answer": {
+        "decision": "abstain",
+        "answer": "",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"abstain\", \"answer\": \"\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "known_blue_tokens": 3
+      }
+    },
+    {
+      "case_id": "repair-0023",
+      "category": "error_repair",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "156"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "156",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"156\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "a": 13,
+        "b": 12,
+        "wrong": 158,
+        "correct": 156
+      }
+    },
+    {
+      "case_id": "insufficient-0012",
+      "category": "insufficient_information",
+      "expected_decision": "abstain",
+      "accepted_answers": [],
+      "model_answer": {
+        "decision": "abstain",
+        "answer": "",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"abstain\", \"answer\": \"\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "known_blue_tokens": 4
+      }
+    },
+    {
+      "case_id": "contradiction-0020",
+      "category": "contradiction_detection",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "INCONSISTENT"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "INCONSISTENT",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"INCONSISTENT\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "age_a": 54,
+        "age_b": 50
+      }
+    },
+    {
+      "case_id": "contradiction-0008",
+      "category": "contradiction_detection",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "INCONSISTENT"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "INCONSISTENT",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"INCONSISTENT\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "age_a": 55,
+        "age_b": 52
+      }
+    },
+    {
+      "case_id": "repair-0011",
+      "category": "error_repair",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "120"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "120",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"120\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "a": 10,
+        "b": 12,
+        "wrong": 122,
+        "correct": 120
+      }
+    },
+    {
+      "case_id": "repair-0017",
+      "category": "error_repair",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "36"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "36",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"36\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "a": 9,
+        "b": 4,
+        "wrong": 38,
+        "correct": 36
+      }
+    },
+    {
+      "case_id": "repair-0005",
+      "category": "error_repair",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "108"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "108",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"108\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "a": 12,
+        "b": 9,
+        "wrong": 105,
+        "correct": 108
+      }
+    },
+    {
+      "case_id": "rule-shift-0010",
+      "category": "rule_shift",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "Q"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "Q",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"Q\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "target": "star",
+        "old": "S",
+        "new": "Q"
+      }
+    },
+    {
+      "case_id": "rule-shift-0016",
+      "category": "rule_shift",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "Z"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "Z",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"Z\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "target": "circle",
+        "old": "C",
+        "new": "Z"
+      }
+    },
+    {
+      "case_id": "rule-shift-0004",
+      "category": "rule_shift",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "Z"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "Z",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"Z\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "target": "circle",
+        "old": "C",
+        "new": "Z"
+      }
+    },
+    {
+      "case_id": "rule-shift-0022",
+      "category": "rule_shift",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "X"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "X",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"X\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "target": "circle",
+        "old": "C",
+        "new": "X"
+      }
+    },
+    {
+      "case_id": "consistent-0003",
+      "category": "contradiction_detection",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "CONSISTENT"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "CONSISTENT",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"CONSISTENT\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "value": 7
+      }
+    },
+    {
+      "case_id": "sufficient-0019",
+      "category": "insufficient_information",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "14"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "14",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"14\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "blue": 2,
+        "red": 12
+      }
+    },
+    {
+      "case_id": "consistent-0021",
+      "category": "contradiction_detection",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "CONSISTENT"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "CONSISTENT",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"CONSISTENT\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "value": 15
+      }
+    },
+    {
+      "case_id": "consistent-0009",
+      "category": "contradiction_detection",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "CONSISTENT"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "CONSISTENT",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"CONSISTENT\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "value": 20
+      }
+    },
+    {
+      "case_id": "sufficient-0007",
+      "category": "insufficient_information",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "9"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "9",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"9\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "blue": 5,
+        "red": 4
+      }
+    },
+    {
+      "case_id": "sufficient-0001",
+      "category": "insufficient_information",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "14"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "14",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"14\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "blue": 2,
+        "red": 12
+      }
+    },
+    {
+      "case_id": "contradiction-0002",
+      "category": "contradiction_detection",
+      "expected_decision": "answer",
+      "accepted_answers": [
+        "INCONSISTENT"
+      ],
+      "model_answer": {
+        "decision": "answer",
+        "answer": "INCONSISTENT",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"answer\", \"answer\": \"INCONSISTENT\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "age_a": 35,
+        "age_b": 32
+      }
+    },
+    {
+      "case_id": "insufficient-0006",
+      "category": "insufficient_information",
+      "expected_decision": "abstain",
+      "accepted_answers": [],
+      "model_answer": {
+        "decision": "abstain",
+        "answer": "",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"abstain\", \"answer\": \"\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "known_blue_tokens": 3
+      }
+    },
+    {
+      "case_id": "insufficient-0018",
+      "category": "insufficient_information",
+      "expected_decision": "abstain",
+      "accepted_answers": [],
+      "model_answer": {
+        "decision": "abstain",
+        "answer": "",
+        "confidence": 0.99,
+        "reason": "Mock response generated from the test oracle."
+      },
+      "raw_response": "{\"decision\": \"abstain\", \"answer\": \"\", \"confidence\": 0.99, \"reason\": \"Mock response generated from the test oracle.\"}",
+      "parse_ok": true,
+      "correct": true,
+      "confidence_score": 0.9999,
+      "latency_ms": 1.0,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "error": null,
+      "metadata": {
+        "known_blue_tokens": 6
+      }
+    }
+  ]
+}

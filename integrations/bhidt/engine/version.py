@@ -1,0 +1,12 @@
+ENGINE_VERSION = "0.4.0"
+SNAPSHOT_SCHEMA_VERSION = "0.4"
+JOURNAL_SCHEMA_VERSION = "0.4"
+VERIFICATION_VERSION = "0.4.0"
+
+MODEL_VERSIONS = {
+    "ISLAND_QES": "island-qes-toy-0.1",
+    "HAWKING_SEMICLASSICAL": "hawking-semiclassical-toy-0.1",
+}
+
+CONSTANTS_VERSION = "physics-constants-v0.1"
+SERIALIZATION_VERSION = "canonical-json-v1"

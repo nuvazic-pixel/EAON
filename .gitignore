@@ -1,0 +1,37 @@
+# Local credentials and environment
+.env
+.env.*
+!.env.example
+!.env.*.example
+.venv/
+venv/
+venv311/
+# Generated Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+build/
+dist/
+# Private runtime data and exports
+data/
+runs/
+results/
+output/
+logs/
+*.db
+*.db-*
+*.sqlite*
+*.jsonl
+*.log
+*.wav
+*.mp3
+*.mmdb
+*-backup.json
+*.pem
+*.key
+# Local model weights
+*.onnx
+*.gguf

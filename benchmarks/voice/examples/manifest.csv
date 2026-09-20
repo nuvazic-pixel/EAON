@@ -1,0 +1,7 @@
+sample_id,audio_path,language,reference_text,wake_expected,condition
+ro_clean_01,audio/ro_clean_01.wav,ro,EAON aprinde lumina,true,clean_near
+de_clean_01,audio/de_clean_01.wav,de,EAON schalte das Licht ein,true,clean_near
+en_clean_01,audio/en_clean_01.wav,en,EAON turn on the light,true,clean_near
+ro_negative_01,audio/ro_negative_01.wav,ro,Aeon este un concept,false,near_homophone
+de_negative_01,audio/de_negative_01.wav,de,Wir gehen heute einkaufen,false,conversational
+en_negative_01,audio/en_negative_01.wav,en,Play some quiet music,false,conversational

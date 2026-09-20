@@ -1,0 +1,8 @@
+[project]
+name = "eaon-skills"
+version = "0.1.0"
+description = "Local-first dynamic context skill router for AI agents."
+requires-python = ">=3.10"
+
+[tool.ruff]
+line-length = 100

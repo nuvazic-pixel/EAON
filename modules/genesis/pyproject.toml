@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eaon-genesis"
+version = "0.2.0"
+description = "Local-first orchestration core for EAON Genesis SELF."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Mark + Codex" }]
+
+[project.scripts]
+eaon = "eaon.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["eaon*"]

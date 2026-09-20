@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eaon-c3"
+version = "0.1.0"
+description = "EAON C/3 multilingual voice benchmark and tamper-evident state journal"
+requires-python = ">=3.11"
+
+[project.scripts]
+eaon-c3 = "eaon_c3.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
