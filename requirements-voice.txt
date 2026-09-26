@@ -1,0 +1,5 @@
+# Local voice UI (Python 3.12 on Windows).
+-r requirements-local.txt
+streamlit==1.64.0
+sherpa-onnx==1.13.8
+numpy==2.5.3

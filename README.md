@@ -28,6 +28,16 @@ Ollama is optional for this check. For an actual local model prompt, start Ollam
 install `llama3`, then run `scripts\local_run.py --prompt "Hello EAON"`.
 Full PowerShell pull commands and limits: [EAON local pe Windows](docs/LOCAL_WINDOWS.md).
 
+### Local voice and chat UI
+
+Install `requirements-voice.txt`, run `scripts/setup_voice_model.py` once,
+install `llama3` in Ollama, then run `scripts/voice_ui.py`. Open
+`http://127.0.0.1:8501` for text chat, push-to-talk microphone transcription
+with Sherpa ONNX, and a button that reads replies with your browser voice.
+The [Windows instructions](docs/LOCAL_WINDOWS.md#interfață-cu-text-și-microfon-local)
+include PowerShell commands. This path does not enable always-on listening,
+tool execution, or physical device control.
+
 ## Start with the SELF loop
 
 Python 3.11+; Genesis needs only the standard library:
@@ -95,8 +105,9 @@ python -m pip install -r requirements-verify.txt
 python scripts/verify_workspace.py
 ```
 
-**40 existing tests passed across seven isolated suites.** See the
-[verification report](docs/VERIFICATION.md) for exact checks and limits.
+The seven isolated suites pass, including local voice UI boundary tests in the
+root suite. The [verification report](docs/VERIFICATION.md) captures the earlier
+recovery baseline and its limits.
 Mock tests do not establish live speech accuracy, model quality, database deployment
 or real-world safety.
 
@@ -113,9 +124,10 @@ The [voice/interlock protocol](docs/topics/VOICE_AND_SAFETY.md),
 implementation status. No consciousness, AGI, multiverse detection or universal
 scientific-discovery capability is claimed.
 
-The voice module also has an isolated mock-only interlock policy and adversarial
-tests. Its network-boundary test double does not verify real OS isolation; the
-live Sherpa and physical-tool path remains unconnected.
+The voice benchmark module has an isolated mock-only interlock policy and
+adversarial tests. Its network-boundary test double does not verify real OS
+isolation. The separate local UI uses live Sherpa ONNX transcription, but is
+not connected to the benchmark interlock or physical-tool path.
 The root INTEL path now rejects missing/unknown model IDs and failed model calls
 instead of returning a fabricated successful response.
 
