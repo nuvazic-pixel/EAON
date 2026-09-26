@@ -28,8 +28,9 @@ produce visible errors or uncertainty, not plausible replacement memories.
 
 ## Existing technical debt to address before deployment
 
-- INTEL model failure can be reported with `ok=True`; critic/confirmation flags
-  are not enforced gates, and semantic routing is unfinished.
+- INTEL now rejects unknown model IDs and reports failed/empty model calls as
+  `ok=False`; critic/confirmation flags are still not enforced gates, and
+  semantic routing is unfinished.
 - Several modules share the `eaon` namespace; keep isolated until an intentional
   packaging migration preserves entry points.
 - JSONL writers need a defined single writer/locking policy and trusted anchors.
@@ -37,6 +38,8 @@ produce visible errors or uncertainty, not plausible replacement memories.
   enforcement and complete database integration testing are still missing.
 - C3 command execution lacks the later interlock and a process timeout; adapter
   JSON needs stronger type validation before any real hardware trial.
+- The new C3 mock-only policy tests require an externally verified network boundary,
+  trusted wake/source classification and a real Sherpa wrapper before live use.
 - The Skills context budget is metadata, not an enforced token budget.
 - Research ingestion and graph models are separate; novelty/calibration and
   historical-cutoff evaluation have not been validated.

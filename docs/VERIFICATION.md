@@ -47,11 +47,40 @@ workspace verifier now includes that startup check.
 No full-suite rerun was needed for the export-only fix: the failed startup path was
 rechecked directly. Imported module implementations tested above were unchanged.
 
+## Voice policy update — 2026-09-26
+
+From the repository root, `PYTHONPATH=benchmarks/voice/src python -m unittest
+discover -s benchmarks/voice/tests -q` passed **14** tests. The added tests cover
+startup fault injection (wrong executor, connected registry, network unverified,
+unarmed stop, unknown model, missing journal write), negative wake/TTS/model/tool
+attempts, journal tampering and truncation, stop changes during a turn, and a
+mock result failing its postcondition. The C3 mock manifest still returned six
+samples; `eaon_c3 verify` accepted all **42** journal records. These results only
+exercise the simulated policy and existing mock benchmark; they do not certify
+outbound network isolation or live voice/hardware behavior.
+
+Four `tests/test_gateway.py` cases also passed with external dependencies
+installed into a separate scratch directory. They exercise exact model dispatch,
+unknown/missing IDs, empty responses and a mocked Ollama connection failure.
+No live model or network call was made.
+The root `python main.py --stats` startup check also succeeded with those local
+dependencies.
+
+## Local launcher update — 2026-09-26
+
+In a fresh Python 3.12 virtual environment, installed `requirements-local.txt` and
+ran `python scripts/local_run.py`: four gateway tests, 14 voice tests, INTEL stats,
+six mock samples and a valid 42-record journal passed. After installing
+`requirements-verify.txt`, `python scripts/local_run.py --all-tests` passed all
+seven isolated suites (**56 tests**), plus the CLI startup check. This run was on
+Linux; the PowerShell commands are provided for Windows but have not been run on
+Windows hardware. Neither run invoked a live model or microphone.
+
 ## Deliberately unverified
 
 - Ollama/model quality, original Porcupine/Whisper/Piper pipeline and real Sherpa ASR.
 - Microphone timing, wake-to-audio latency, false activations per hour, 8h/48h endurance.
-- The specified CAUC/privacy/safety-interlock path; it is not implemented by C3.
+- The full CAUC/privacy/safety-interlock live path; C3's policy tests are mock-only.
 - PostgreSQL/container startup and end-to-end Cognitive Twin database/API behavior.
 - Live OpenAlex corpus ingestion, knowledge-graph integration and novel discoveries.
 - Slack/Jira delivery, threat-intelligence services and original missing INTEL tests.

@@ -4,7 +4,7 @@
 
 | Entrypoint | Current path | Storage/output |
 |---|---|---|
-| Root `main.py` | IP enrichment → risk mode → keyword route → Ollama → audit/optional notifications | Logs/cache |
+| Root `main.py` | IP enrichment → risk mode → keyword route → exact-ID inference gateway → Ollama → audit/optional notifications | Logs/cache |
 | Genesis CLI | Classify → retrieve → reality labels → deterministic council → append | Hash-linked JSONL |
 | Local-first CLI | Local source → evidence → SQLite → retrieval → extractive/Ollama → reality check | SQLite sources/claims/runs |
 | Cognitive Twin API | Request → domain-label policy → journal/graph/hypothesis/snapshot operations | PostgreSQL |

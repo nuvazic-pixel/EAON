@@ -27,6 +27,27 @@ python -m eaon_c3 verify runs/smoke/state-journal.jsonl
 Modul `mock` verifică infrastructura, nu performanța. Fișierele WAV din
 manifest nu sunt necesare pentru acest smoke test.
 
+## Safety interlock simulat
+
+`eaon_c3.safety.DryRunSession` este o cale separată pentru tentative de tool
+**numai cu `MockToolExecutor`**. Rulează verificarea înainte de pornire și din nou
+înaintea fiecărei tentative. Refuză wake neautorizat, voce TTS, model necunoscut,
+tool nepermis, argumente invalide, jurnal corupt, rețea nedeclarată izolată și
+emergency stop dezarmat. Jurnalizează doar hashurile outputului și argumentelor,
+decizia, simularea și postcondiția, cu ID-uri de sesiune/tură/span.
+
+Rulează testele adversariale fără microfon sau servicii externe:
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+`NetworkBoundary` refuză implicit pornirea; testele injectează un obiect fals
+care returnează `True` pentru a testa logica interlock-ului. Acest lucru **nu
+probează izolarea rețelei la nivel de OS**. Un wrapper Sherpa real, clasificarea
+de încredere human/TTS și verificarea izolării pe Windows nu sunt încă integrate.
+Adaptorul `command` de mai jos rămâne separat de interlock.
+
 ## Legarea Sherpa-ONNX
 
 Adaptorul real trebuie să primească un WAV și să scrie pe stdout un singur JSON:

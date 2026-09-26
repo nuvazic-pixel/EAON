@@ -1,0 +1,5 @@
+# Minimal dependencies for the original INTEL CLI and local smoke check.
+# Recovered packages are launched separately with scripts/run_module.py.
+python-dotenv==1.2.3
+requests==2.34.2
+structlog==26.1.0

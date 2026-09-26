@@ -12,6 +12,22 @@ not yet one fully integrated assistant.
 [Verified status](docs/PROJECT_STATUS.md) · [History](docs/HISTORY.md) ·
 [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md)
 
+## Local run on Windows
+
+From PowerShell after cloning or pulling `main`:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-local.txt
+.\.venv\Scripts\python.exe scripts\local_run.py
+```
+
+This runs the INTEL gateway and voice interlock tests, starts `main.py --stats`,
+and writes a fresh six-sample mock voice report under `benchmarks/voice/runs/`.
+Ollama is optional for this check. For an actual local model prompt, start Ollama,
+install `llama3`, then run `scripts\local_run.py --prompt "Hello EAON"`.
+Full PowerShell pull commands and limits: [EAON local pe Windows](docs/LOCAL_WINDOWS.md).
+
 ## Start with the SELF loop
 
 Python 3.11+; Genesis needs only the standard library:
@@ -96,6 +112,12 @@ The [voice/interlock protocol](docs/topics/VOICE_AND_SAFETY.md),
 [research layer](docs/topics/RESEARCH.md) preserve the agreed updates and their
 implementation status. No consciousness, AGI, multiverse detection or universal
 scientific-discovery capability is claimed.
+
+The voice module also has an isolated mock-only interlock policy and adversarial
+tests. Its network-boundary test double does not verify real OS isolation; the
+live Sherpa and physical-tool path remains unconnected.
+The root INTEL path now rejects missing/unknown model IDs and failed model calls
+instead of returning a fabricated successful response.
 
 ## Provenance and privacy
 
