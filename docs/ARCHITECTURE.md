@@ -4,7 +4,8 @@
 
 | Entrypoint | Current path | Storage/output |
 |---|---|---|
-| Root `main.py` | IP enrichment → risk mode → keyword route → exact-ID inference gateway → Ollama → audit/optional notifications | Logs/cache |
+| Root `main.py` | IP enrichment → risk mode → shared keyword router → exact-ID inference gateway → Ollama chat → audit/optional notifications | Logs/cache + metadata telemetry JSONL |
+| Local voice UI | Microphone → Sherpa transcription or typed text → shared orchestrator/router/gateway → Ollama chat → browser voice button | Session history + same metadata telemetry JSONL; external adapters disabled |
 | Genesis CLI | Classify → retrieve → reality labels → deterministic council → append | Hash-linked JSONL |
 | Local-first CLI | Local source → evidence → SQLite → retrieval → extractive/Ollama → reality check | SQLite sources/claims/runs |
 | Cognitive Twin API | Request → domain-label policy → journal/graph/hypothesis/snapshot operations | PostgreSQL |

@@ -155,7 +155,7 @@ class OrchestratorConfig:
     medium_risk_threshold: int = 20
     
     # Execution
-    timeout_seconds: int = 30
+    timeout_seconds: int = 120
     max_retries: int = 2
     enable_critic: bool = True
     
@@ -167,7 +167,7 @@ class OrchestratorConfig:
             safe_mode_model=os.getenv("EAON_SAFE_MODE_MODEL", "mistral"),
             high_risk_threshold=int(os.getenv("EAON_HIGH_RISK_THRESHOLD", "40")),
             medium_risk_threshold=int(os.getenv("EAON_MEDIUM_RISK_THRESHOLD", "20")),
-            timeout_seconds=int(os.getenv("EAON_TIMEOUT", "30")),
+            timeout_seconds=int(os.getenv("EAON_TIMEOUT", "120")),
             max_retries=int(os.getenv("EAON_MAX_RETRIES", "2")),
             enable_critic=_bool(os.getenv("EAON_ENABLE_CRITIC", "true")),
         )

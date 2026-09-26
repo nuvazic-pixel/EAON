@@ -60,6 +60,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-voice.txt
 .\.venv\Scripts\python.exe scripts\setup_voice_model.py
 ollama pull llama3
+ollama pull mistral
 .\.venv\Scripts\python.exe scripts\voice_ui.py
 ```
 
@@ -68,7 +69,22 @@ pentru acest site local. Înregistrează mesajul, oprește înregistrarea, verif
 transcrierea, apoi apasă **Trimite mesajul vocal**. Alternativ, tastează direct
 în chat. Pentru a auzi răspunsul, apasă **Ascultă răspunsul**; calitatea și
 disponibilitatea vocii depind de vocile instalate în browser/Windows. În
-sidebar poți alege Mistral (după `ollama pull mistral`) sau limba de vorbire.
+sidebar alegi limba, vezi modelele instalate și numărul de cereri/erori.
+
+Textul și transcrierea vocală ajung în același orchestrator ca mesajele din
+CLI. Routerul folosește reguli simple: de exemplu, cererile despre securitate
+folosesc `mistral`, iar majoritatea celorlalte folosesc `llama3`. Nu schimbă
+automat modelul dacă cel ales lipsește; instalează-le pe ambele pentru această
+rutare. Consola interactivă păstrează un context limitat la ultimele 12 mesaje.
+Timpul maxim de așteptare pentru răspuns este 120 de secunde implicit; îl poți
+schimba cu `EAON_TIMEOUT` în `.env`.
+
+Fiecare cerere către model scrie un eveniment în `data/telemetry.jsonl` cu
+sursa (`cli`/`text`/`voice`), intenția, modelul, succesul sau eroarea și
+duratele. Pentru voce se adaugă durata transcrierii. Verifică ultimele
+evenimente din PowerShell cu `Get-Content data\telemetry.jsonl -Tail 5`.
+Jurnalul nu include mesajul, transcrierea, răspunsul sau înregistrarea audio.
+Butonul **Șterge conversația** golește sesiunea UI, nu șterge acest jurnal.
 
 Instalarea Sherpa descarcă din release-ul oficial modelul multilingv Whisper
 tiny într-un folder `models/` ignorat de Git. Fișierele pot fi mari; este

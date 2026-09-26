@@ -6,6 +6,7 @@ import hashlib
 import html
 from pathlib import Path
 import sys
+import time
 
 import streamlit as st
 
@@ -13,10 +14,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ui.voice_backend import (  # noqa: E402
-    VoiceUIError, chat_reply, create_recognizer, installed_models,
-    model_directory, model_ready, transcribe,
-)
+from dotenv import load_dotenv  # noqa: E402
+load_dotenv(ROOT / ".env")
+
+from core import Orchestrator  # noqa: E402
+from core.ollama_client import OllamaError, MAX_PROMPT_CHARS, installed_models  # noqa: E402
+from ui.voice_backend import VoiceUIError, create_recognizer, model_directory, model_ready, transcribe  # noqa: E402
 
 st.set_page_config(page_title="EAON • conversație locală", page_icon="🎙️", layout="centered")
 st.html("""
@@ -58,17 +61,35 @@ def speak_button(message: str, index: int, language: str) -> None:
     )
 
 
-def send_message(prompt: str, model: str) -> None:
-    try:
-        answer = chat_reply(prompt, st.session_state.messages, model)
-    except VoiceUIError as exc:
-        st.error(str(exc))
+def send_message(prompt: str, source: str) -> None:
+    prompt = prompt.strip()
+    if not 0 < len(prompt) <= MAX_PROMPT_CHARS:
+        st.error("Mesajul trebuie să aibă între 1 și 4000 de caractere.")
+        return
+    orchestrator = st.session_state.orchestrator
+    decision, report = orchestrator.run(
+        prompt, history=st.session_state.messages, source=source,
+        stt_ms=st.session_state.get("draft_stt_ms") if source == "voice" else None,
+    )
+    if not report.ok:
+        problems = {
+            "llama3_unavailable": "Ollama nu răspunde local. Pornește Ollama.",
+            "mistral_unavailable": "Ollama nu răspunde local. Pornește Ollama.",
+            "model_missing": f"Modelul lipsește. Rulează: ollama pull {decision.model}",
+            "invalid_prompt": "Mesajul trebuie să aibă între 1 și 4000 de caractere.",
+            "empty_model_response": "Ollama a trimis un răspuns gol. Încearcă din nou.",
+        }
+        st.error(problems.get(report.error, f"Cererea a eșuat ({report.error})."))
         return
     st.session_state.messages += [
         {"role": "user", "content": prompt},
-        {"role": "assistant", "content": answer},
+        {"role": "assistant", "content": report.output_text,
+         "route": {"intent": decision.intent, "model": decision.model,
+                   "latency_ms": round(report.inference_time_ms)}},
     ]
-    st.session_state.draft = ""
+    if source == "voice":
+        st.session_state.draft = ""
+        st.session_state.draft_stt_ms = None
     st.rerun()
 
 
@@ -80,22 +101,25 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "draft" not in st.session_state:
     st.session_state.draft = ""
+if "orchestrator" not in st.session_state:
+    st.session_state.orchestrator = Orchestrator(local_only=True)
 
 with st.sidebar:
-    st.header("Configurare")
-    selected_model = st.selectbox("Model Ollama", ("llama3", "mistral"))
+    st.header("Orchestrare")
+    st.caption("Routerul alege Llama 3 sau Mistral după intenție. Modul este local, fără integrări externe.")
     language_name = st.selectbox("Limba vorbită", ("Română", "Deutsch", "English", "Automat"))
     language = {"Română": "ro", "Deutsch": "de", "English": "en", "Automat": ""}[language_name]
     browser_language = language or "ro"
     try:
         available = installed_models()
-    except VoiceUIError:
-        st.warning("Ollama este oprit. Pornește aplicația Ollama.")
+    except OllamaError:
+        st.warning("Nu pot verifica Ollama la 127.0.0.1:11434. Verifică aplicația locală.")
     else:
-        if selected_model in available:
-            st.success(f"Ollama gata: {selected_model}")
-        else:
-            st.warning(f"Instalează modelul: ollama pull {selected_model}")
+        for model in ("llama3", "mistral"):
+            if model in available:
+                st.success(f"Ollama gata: {model}")
+            else:
+                st.warning(f"Pentru rutarea automată instalează: ollama pull {model}")
     if model_ready(model_directory(ROOT)):
         st.success("Sherpa gata pentru microfon")
     else:
@@ -104,14 +128,22 @@ with st.sidebar:
         st.session_state.messages = []
         st.session_state.draft = ""
         st.session_state.last_recording = None
+        st.session_state.draft_stt_ms = None
         st.session_state.microphone_version = st.session_state.get("microphone_version", 0) + 1
         st.rerun()
-    st.caption("Istoricul rămâne în această sesiune. Mesajele merg doar la Ollama pe 127.0.0.1.")
+    stats = st.session_state.orchestrator.get_stats()
+    col_a, col_b = st.columns(2)
+    col_a.metric("Cereri", stats["request_count"])
+    col_b.metric("Erori", stats["error_count"])
+    st.caption("Jurnal local: data/telemetry.jsonl (doar metadate). Ștergerea conversației nu șterge jurnalul.")
 
 for index, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
         if message["role"] == "assistant":
+            route = message.get("route")
+            if route:
+                st.caption(f"{route['intent']} → {route['model']} · {route['latency_ms']} ms")
             speak_button(message["content"], index, browser_language)
 
 st.markdown('<div class="eaon-card"><b>🎙️ Microfon</b><br>Apasă, vorbește, apoi oprește înregistrarea. Verifică transcrierea înainte de trimitere.</div>', unsafe_allow_html=True)
@@ -121,9 +153,14 @@ if recorded is not None:
     recording = recorded.getvalue()
     recording_key = (hashlib.sha256(recording).hexdigest(), language)
     if recording_key != st.session_state.get("last_recording"):
+        started = time.perf_counter()
+        st.session_state.draft = ""
+        st.session_state.draft_stt_ms = None
         try:
             st.session_state.draft = transcribe(recording, recognizer_for(language))
+            st.session_state.draft_stt_ms = (time.perf_counter() - started) * 1000
         except (VoiceUIError, ImportError, RuntimeError) as exc:
+            st.session_state.draft_stt_ms = None
             st.error(f"Transcriere indisponibilă: {exc}")
         st.session_state.last_recording = recording_key
 
@@ -132,8 +169,8 @@ if st.session_state.draft:
         reviewed = st.text_area("Corectează transcrierea dacă e nevoie", value=st.session_state.draft)
         submitted = st.form_submit_button("Trimite mesajul vocal", type="primary")
     if submitted:
-        send_message(reviewed, selected_model)
+        send_message(reviewed, "voice")
 
 typed = st.chat_input("Scrie un mesaj pentru EAON...")
 if typed:
-    send_message(typed, selected_model)
+    send_message(typed, "text")

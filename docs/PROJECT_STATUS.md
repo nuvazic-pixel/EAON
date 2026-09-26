@@ -5,13 +5,18 @@ Gap head `971fc49`, and the recovered artifacts recorded in the manifest.
 
 Update **2026-09-26**: The voice harness has a separate mock-only
 `eaon_c3.safety.DryRunSession` policy and adversarial unit tests. This does not
-change the historical snapshot below: Sherpa capture, trusted wake/source
-classification and verified OS network isolation are still missing.
+change the historical snapshot below: Sherpa capture within the benchmark,
+trusted wake/source classification and verified OS network isolation are still missing.
 The original INTEL orchestrator now dispatches through an exact-ID gateway;
 unknown IDs, empty output and failed Ollama calls return `ok=False`. The CAUC
 shadow path is not connected to this gateway.
 `scripts/local_run.py` provides a repeatable local smoke check and an optional
 Ollama prompt/interactive launch; the recovered components remain independent.
+The local voice UI and root CLI now use the same keyword router, exact-ID
+inference gateway, loopback Ollama chat transport and metadata-only local
+telemetry (`data/telemetry.jsonl`). The UI skips INTEL lookups, Slack and Jira.
+The live UI transcription remains separate from the mock voice benchmark and
+its interlock; no physical tool path or wake-word recognition is connected.
 
 **Recovered code** means source exists and was inspected. **Historical report**
 means behavior was reported without its complete runnable evidence. **Specified**
@@ -21,9 +26,9 @@ Test results are recorded independently in [VERIFICATION.md](VERIFICATION.md).
 | Area | Evidence | Current behavior and limits |
 |---|---|---|
 | INTEL core | Original Git code | CLI, keyword intent, Ollama Llama/Mistral calls, GeoIP/reputation, risk modes, notification adapters. No live services tested. |
-| Semantic routing | Partial code | `Router._route_semantic()` falls back to keywords. The orchestrator uses its own keyword detector. |
+| Semantic routing | Partial code | `Router._route_semantic()` falls back to keywords. The root orchestrator and UI now share `Router.route()`; security requests select Mistral, other categories Llama 3 in normal mode. |
 | Critic/confirmation | Configuration in INTEL | Flags exist in routing decisions; that path does not enforce a completed critic loop or approval gate. |
-| Model failure | Known INTEL limitation | Model helpers return an unavailable message on failure; the outer report may still return `ok=True`. |
+| Model failure | Verified current code | Missing model, unknown ID, empty response and Ollama failures return `ok=False`; no automatic fallback. |
 | Knowledge records | Branch code | `Source`, `Evidence`, `Claim`, `Relation`, `Gap`, provenance and conditions. |
 | Gap detection | Branch code | Contradictions, unsupported assumptions, two-hop bridges, unsupported cross-domain links and invalid time ranges. Scores are heuristic. |
 | OpenAlex ingestion | Branch code | Normalization, conservative sentence extraction, SQLite and CLI. Live corpus ingestion not rerun. |
@@ -37,7 +42,7 @@ Test results are recorded independently in [VERIFICATION.md](VERIFICATION.md).
 | Browser Genesis | External site artifact | Saved publication shows browser-local capture, tags, links, import/export. Source is not here; distinct from PostgreSQL Twin. |
 | Voice baseline | Historical report | Porcupine → Whisper CPU → Piper/Ollama. Wake/STT execution and an empty transcript were reported; full voice package missing. |
 | Voice C3 | Recovered code | CSV scoring, mock/command adapters, WER, wake rates, p50/p95, hash-linked transitions. Mock returns the reference transcript and synthetic timings. |
-| Sherpa runtime | Specified interface | Generic command adapter exists; real wrapper, models, WAV corpus and capture runtime are missing. |
+| Sherpa runtime | Partial code | Local Streamlit UI records WAV at 16 kHz and calls Sherpa Whisper tiny, installed separately. Benchmark harness remains mock/command only; physical microphone accuracy not tested here. |
 | CAUC/privacy/interlock | Specified | Observational CAUC and fail-closed dry-run interlock are later requirements, not implemented by the recovered C3 harness. |
 | MetaBench | Recovered code | Procedural tasks, scoring and reports. Perfect-mock results validate the harness, not intelligence. |
 | Multi-model Council API | Historical UI/report | `/council` visible in earlier API evidence; server source and v0.2 critic/revision implementation not recovered. |

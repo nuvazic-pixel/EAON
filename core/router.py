@@ -29,6 +29,8 @@ INTENT_KEYWORDS = {
         "threat", "attack", "malicious", "vulnerability", "exploit",
         "breach", "intrusion", "malware", "ransomware", "phishing",
         "ddos", "firewall", "incident", "compromise", "cve",
+        "securitate", "amenințare", "amenintare", "atac", "vulnerabilitate",
+        "sicherheit", "angriff", "bedrohung", "schwachstelle",
     ],
     IntentCategory.CODE: [
         "code", "function", "debug", "program", "script", "python",

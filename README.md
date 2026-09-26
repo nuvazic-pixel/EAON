@@ -31,9 +31,11 @@ Full PowerShell pull commands and limits: [EAON local pe Windows](docs/LOCAL_WIN
 ### Local voice and chat UI
 
 Install `requirements-voice.txt`, run `scripts/setup_voice_model.py` once,
-install `llama3` in Ollama, then run `scripts/voice_ui.py`. Open
+install `llama3` and `mistral` in Ollama, then run `scripts/voice_ui.py`. Open
 `http://127.0.0.1:8501` for text chat, push-to-talk microphone transcription
 with Sherpa ONNX, and a button that reads replies with your browser voice.
+Text, voice and the root CLI share the keyword router, exact-ID gateway, Ollama
+chat client and local metadata-only telemetry at `data/telemetry.jsonl`.
 The [Windows instructions](docs/LOCAL_WINDOWS.md#interfață-cu-text-și-microfon-local)
 include PowerShell commands. This path does not enable always-on listening,
 tool execution, or physical device control.
@@ -126,8 +128,9 @@ scientific-discovery capability is claimed.
 
 The voice benchmark module has an isolated mock-only interlock policy and
 adversarial tests. Its network-boundary test double does not verify real OS
-isolation. The separate local UI uses live Sherpa ONNX transcription, but is
-not connected to the benchmark interlock or physical-tool path.
+isolation. The local UI shares the root orchestrator and telemetry, and uses
+live Sherpa ONNX transcription. It does not use the benchmark interlock or
+physical-tool path.
 The root INTEL path now rejects missing/unknown model IDs and failed model calls
 instead of returning a fabricated successful response.
 

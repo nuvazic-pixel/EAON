@@ -1,29 +1,15 @@
-"""Speech-to-text and multi-turn Ollama chat for the local EAON UI."""
+"""Local microphone decoding; model calls live in the central orchestrator."""
 
 from __future__ import annotations
 
 import io
-import json
 from pathlib import Path
-import urllib.error
-import urllib.request
 import wave
 
-from core.inference_gateway import InferenceGateway, ModelDispatchError
-
-OLLAMA_URL = "http://127.0.0.1:11434"
-MODEL_NAMES = ("llama3", "mistral")
 MODEL_FOLDER = "sherpa-onnx-whisper-tiny"
 MODEL_PARTS = ("tiny-encoder.int8.onnx", "tiny-decoder.int8.onnx", "tiny-tokens.txt")
 MAX_RECORDING_BYTES = 4_000_000
 MAX_RECORDING_SECONDS = 30
-MAX_PROMPT_CHARS = 4_000
-SYSTEM_PROMPT = (
-    "Ești EAON, un asistent local de conversație. Răspunde în limba utilizatorului, "
-    "clar și concis. Poți discuta și explica, dar această interfață nu are "
-    "acces la comenzi, fișiere, dispozitive sau acțiuni fizice. "
-    "Nu afirma că ai executat acțiuni pe care nu le-ai executat."
-)
 
 
 class VoiceUIError(ValueError):
@@ -86,72 +72,3 @@ def transcribe(recording: bytes, recognizer) -> str:
     if not result:
         raise VoiceUIError("Nu am recunoscut cuvinte. Încearcă din nou mai aproape de microfon.")
     return result
-
-
-def _local_json(path: str, payload: dict | None = None, *, timeout: int = 3) -> dict:
-    request = urllib.request.Request(
-        OLLAMA_URL + path,
-        data=json.dumps(payload).encode("utf-8") if payload is not None else None,
-        headers={"Content-Type": "application/json"} if payload is not None else {},
-    )
-    # Ignore HTTP(S)_PROXY: model traffic must remain on loopback.
-    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-    try:
-        with opener.open(request, timeout=timeout) as response:
-            result = json.load(response)
-        if not isinstance(result, dict):
-            raise ValueError("unexpected Ollama JSON")
-        return result
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404 and isinstance(payload, dict) and isinstance(payload.get("model"), str):
-            raise VoiceUIError(f"Modelul lipsește. Rulează: ollama pull {payload['model']}") from exc
-        raise VoiceUIError(f"Ollama a răspuns cu eroarea HTTP {exc.code}.") from exc
-    except (OSError, ValueError) as exc:
-        raise VoiceUIError("Ollama nu răspunde la 127.0.0.1:11434. Pornește Ollama local.") from exc
-
-
-def installed_models() -> set[str]:
-    result = _local_json("/api/tags")
-    return {
-        item["name"].split(":", 1)[0]
-        for item in result.get("models", [])
-        if isinstance(item, dict) and isinstance(item.get("name"), str)
-    }
-
-
-def chat_reply(prompt: str, history: list[dict], model: str) -> str:
-    """Send bounded conversation to an explicitly selected Ollama model."""
-    prompt = prompt.strip()
-    if not prompt or len(prompt) > MAX_PROMPT_CHARS:
-        raise VoiceUIError("Mesajul trebuie să aibă între 1 și 4000 de caractere.")
-    # Only locally generated user/assistant turns go to Ollama; never tool calls.
-    recent = [
-        {"role": turn["role"], "content": turn["content"][:MAX_PROMPT_CHARS]}
-        for turn in history
-        if isinstance(turn, dict)
-        and turn.get("role") in ("user", "assistant")
-        and isinstance(turn.get("content"), str)
-    ][-12:]
-
-    def ask(selected: str) -> str:
-        result = _local_json(
-            "/api/chat",
-            {"model": selected, "stream": False, "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                *recent,
-                {"role": "user", "content": prompt},
-            ]},
-            timeout=120,
-        )
-        message = result.get("message", {})
-        if not isinstance(message, dict) or not isinstance(message.get("content"), str):
-            raise VoiceUIError("Ollama nu a trimis un răspuns text.")
-        return message["content"].strip()
-
-    gateway = InferenceGateway({name: lambda _, chosen=name: ask(chosen) for name in MODEL_NAMES})
-    try:
-        return gateway.dispatch(model, prompt)
-    except ModelDispatchError as exc:
-        if str(exc) == "empty_model_response":
-            raise VoiceUIError("Ollama a trimis un răspuns gol. Încearcă din nou.") from exc
-        raise VoiceUIError(f"Modelul selectat nu este disponibil: {model!r}.") from exc
