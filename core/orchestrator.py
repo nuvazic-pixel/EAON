@@ -21,6 +21,9 @@ from config import (
 from utils import get_logger, extract_ip, AuditLogger
 from adapters import enrich_event, notify_slack, create_jira_ticket
 from .inference_gateway import InferenceGateway
+from .ollama_client import OllamaError, chat as ollama_chat
+from .router import Router
+from .telemetry import TelemetryRecorder, TurnEvent
 
 logger = get_logger("orchestrator")
 audit = AuditLogger()
@@ -81,9 +84,13 @@ class Orchestrator:
     - Notification dispatch
     """
     
-    def __init__(self):
+    def __init__(self, *, local_only: bool = False,
+                 telemetry: TelemetryRecorder | None = None):
         self.settings = get_settings()
         self.orch_config = self.settings.orchestrator
+        self.local_only = local_only
+        self.telemetry = telemetry if telemetry is not None else TelemetryRecorder()
+        self.router = Router(default_model=self.orch_config.default_model)
         
         # Current operating mode
         self._mode = OrchestratorMode.NORMAL
@@ -131,12 +138,14 @@ class Orchestrator:
         audit.log_mode_change(old_mode, new_mode, reason)
         
         # Notify on mode change
-        from adapters import get_slack_notifier
-        notifier = get_slack_notifier()
-        if notifier.enabled:
-            notifier.notify_mode_change(old_mode, new_mode, reason)
+        if not self.local_only:
+            from adapters import get_slack_notifier
+            notifier = get_slack_notifier()
+            if notifier.enabled:
+                notifier.notify_mode_change(old_mode, new_mode, reason)
     
-    def run(self, prompt: str) -> Tuple[RoutingDecision, ExecutionReport]:
+    def run(self, prompt: str, *, history: list[dict] | None = None,
+            source: str = "cli", stt_ms: float | None = None) -> Tuple[RoutingDecision, ExecutionReport]:
         """
         Main entry point: route and execute prompt.
         
@@ -146,11 +155,13 @@ class Orchestrator:
         Returns:
             Tuple of (RoutingDecision, ExecutionReport)
         """
+        if source not in ("cli", "text", "voice"):
+            raise ValueError("invalid_input_source")
         self._request_count += 1
-        start_time = time.time()
+        start_time = time.perf_counter()
         
         # Step 1: Extract IPs and enrich with INTEL
-        intel_ctx = self._enrich_intel(prompt)
+        intel_ctx = IntelContext() if self.local_only else self._enrich_intel(prompt)
         
         # Step 2: Adjust mode based on risk
         self._adjust_mode_for_risk(intel_ctx)
@@ -159,12 +170,23 @@ class Orchestrator:
         decision = self._route(prompt, intel_ctx)
         
         # Step 4: Execute
-        report = self._execute(prompt, decision)
+        report = self._execute(prompt, decision, history=history)
         
         # Step 5: Post-process (notifications, logging)
-        self._post_process(prompt, decision, report, intel_ctx)
-        
-        total_time = (time.time() - start_time) * 1000
+        if not self.local_only:
+            self._post_process(prompt, decision, report, intel_ctx)
+
+        total_time = (time.perf_counter() - start_time) * 1000
+        event = TurnEvent.create(
+            request_id=decision.request_id, source=source, intent=decision.intent,
+            model=decision.model, mode=decision.mode, ok=report.ok,
+            error=report.error, total_ms=total_time,
+            inference_ms=report.inference_time_ms, stt_ms=stt_ms,
+        )
+        try:
+            self.telemetry.record(event)
+        except OSError as exc:
+            logger.warning("telemetry_write_failed", error_type=type(exc).__name__)
         logger.info(
             "request_complete",
             request_id=decision.request_id,
@@ -172,6 +194,7 @@ class Orchestrator:
             model=decision.model,
             mode=decision.mode,
             time_ms=round(total_time, 2),
+            ok=report.ok,
         )
         
         return decision, report
@@ -233,12 +256,14 @@ class Orchestrator:
         Returns:
             RoutingDecision
         """
-        # Detect intent
-        intent = self._detect_intent(prompt)
+        # The same deterministic router serves CLI, typed chat and microphone.
+        route = self.router.route(prompt)
+        intent = route.intent
         
-        # Get model from current mode config
+        # Safe/lockdown mode pins the model. Other modes use intent routing.
         mode_cfg = self.mode_config
-        model = mode_cfg["model"]
+        model = mode_cfg["model"] if self.mode in (
+            OrchestratorMode.SAFE, OrchestratorMode.LOCKDOWN) else route.model
         
         # Determine priority
         priority = Priority.NORMAL
@@ -265,46 +290,24 @@ class Orchestrator:
         )
     
     def _detect_intent(self, prompt: str) -> str:
-        """
-        Detect intent from prompt.
-        
-        This is a simplified version — in production you'd use
-        semantic routing with MiniLM or similar.
-        """
-        prompt_lower = prompt.lower()
-        
-        # Security keywords
-        if any(kw in prompt_lower for kw in ["threat", "attack", "malicious", "vulnerability", "security"]):
-            return "security"
-        
-        # Code keywords
-        if any(kw in prompt_lower for kw in ["code", "function", "debug", "program", "script"]):
-            return "code"
-        
-        # Data keywords
-        if any(kw in prompt_lower for kw in ["data", "analyze", "csv", "database", "sql"]):
-            return "data"
-        
-        # System keywords
-        if any(kw in prompt_lower for kw in ["system", "server", "deploy", "config"]):
-            return "system"
-        
-        return "general"
+        """Compatibility helper for the central keyword router."""
+        return self.router.route(prompt).intent
     
-    def _execute(self, prompt: str, decision: RoutingDecision) -> ExecutionReport:
+    def _execute(self, prompt: str, decision: RoutingDecision,
+                 history: list[dict] | None = None) -> ExecutionReport:
         """
         Dispatch the authorized model ID; never fabricate a fallback response.
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
         
         try:
             gateway = InferenceGateway({
-                "llama3": lambda request: self._call_llama(request, decision),
-                "mistral": lambda request: self._call_mistral(request, decision),
+                "llama3": lambda request: self._call_llama(request, decision, history),
+                "mistral": lambda request: self._call_mistral(request, decision, history),
             })
             output = gateway.dispatch(decision.model, prompt)
             
-            inference_time = (time.time() - start_time) * 1000
+            inference_time = (time.perf_counter() - start_time) * 1000
             
             return ExecutionReport(
                 ok=True,
@@ -315,51 +318,41 @@ class Orchestrator:
         
         except Exception as e:
             self._error_count += 1
-            logger.error("execution_error", error=str(e), model=decision.model)
+            known_errors = {
+                "unknown_model_id", "invalid_prompt", "model_missing", "ollama_unavailable",
+                "ollama_http_error", "ollama_invalid_response", "empty_model_response",
+                "llama3_unavailable", "mistral_unavailable",
+            }
+            error = str(e) if str(e) in known_errors else "execution_error"
+            logger.error("execution_error", error=error, error_type=type(e).__name__,
+                         model=decision.model)
             
             return ExecutionReport(
                 ok=False,
-                error=str(e),
+                error=error,
                 model_used=decision.model,
+                inference_time_ms=(time.perf_counter() - start_time) * 1000,
             )
     
-    def _call_llama(self, prompt: str, decision: RoutingDecision) -> str:
+    def _call_llama(self, prompt: str, decision: RoutingDecision,
+                    history: list[dict] | None = None) -> str:
         """Call Llama model via Ollama."""
         try:
-            import requests
-            resp = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "llama3",
-                    "prompt": prompt,
-                    "stream": False,
-                },
-                timeout=self.orch_config.timeout_seconds,
-            )
-            resp.raise_for_status()
-            return resp.json().get("response", "")
-        except Exception as e:
-            logger.warning("llama_unavailable", error=str(e))
-            raise RuntimeError("llama3_unavailable") from e
+            return ollama_chat("llama3", prompt, history, timeout=self.orch_config.timeout_seconds)
+        except OllamaError as exc:
+            if str(exc) == "ollama_unavailable":
+                raise RuntimeError("llama3_unavailable") from exc
+            raise
     
-    def _call_mistral(self, prompt: str, decision: RoutingDecision) -> str:
+    def _call_mistral(self, prompt: str, decision: RoutingDecision,
+                      history: list[dict] | None = None) -> str:
         """Call Mistral model via Ollama."""
         try:
-            import requests
-            resp = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "mistral",
-                    "prompt": prompt,
-                    "stream": False,
-                },
-                timeout=self.orch_config.timeout_seconds,
-            )
-            resp.raise_for_status()
-            return resp.json().get("response", "")
-        except Exception as e:
-            logger.warning("mistral_unavailable", error=str(e))
-            raise RuntimeError("mistral_unavailable") from e
+            return ollama_chat("mistral", prompt, history, timeout=self.orch_config.timeout_seconds)
+        except OllamaError as exc:
+            if str(exc) == "ollama_unavailable":
+                raise RuntimeError("mistral_unavailable") from exc
+            raise
     
     def _post_process(
         self,

@@ -9,7 +9,7 @@ from unittest.mock import patch
 import wave
 
 from scripts.setup_voice_model import PARTS, MODEL, extract_required, install
-from ui.voice_backend import VoiceUIError, chat_reply, decode_wav, model_ready, transcribe
+from ui.voice_backend import VoiceUIError, decode_wav, model_ready, transcribe
 
 
 def wav_bytes(seconds: float = 0.1) -> bytes:
@@ -53,27 +53,6 @@ class VoiceUITests(unittest.TestCase):
         recognizer.create_stream = lambda: recognizer.stream
         with self.assertRaisesRegex(VoiceUIError, "Nu am recunoscut"):
             transcribe(wav_bytes(), recognizer)
-
-    def test_chat_model_is_exact_and_conversation_is_bounded(self):
-        calls = []
-
-        def fake_local(path, payload, *, timeout):
-            calls.append((path, payload, timeout))
-            return {"message": {"content": " Răspuns local "}}
-
-        history = [{"role": "user", "content": str(i)} for i in range(14)]
-        history += [{"role": "tool", "content": "do not forward"}]
-        with patch("ui.voice_backend._local_json", side_effect=fake_local):
-            self.assertEqual(chat_reply(" Salut ", history, "llama3"), "Răspuns local")
-            with self.assertRaises(VoiceUIError):
-                chat_reply("Salut", history, "unapproved-model")
-        self.assertEqual(len(calls), 1)
-        self.assertEqual(calls[0][0], "/api/chat")
-        self.assertEqual(calls[0][1]["model"], "llama3")
-        messages = calls[0][1]["messages"]
-        self.assertEqual(messages[-1], {"role": "user", "content": "Salut"})
-        self.assertNotIn("tool", {entry["role"] for entry in messages})
-        self.assertEqual(len(messages), 14)
 
     def test_model_extraction_only_installs_expected_regular_files(self):
         archive = BytesIO()

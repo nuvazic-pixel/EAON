@@ -126,6 +126,7 @@ def show_help() -> None:
 def interactive_loop(orchestrator: Orchestrator, logger) -> None:
     """Run interactive REPL loop."""
     show_banner()
+    history: list[dict[str, str]] = []
     
     while True:
         try:
@@ -176,7 +177,7 @@ def interactive_loop(orchestrator: Orchestrator, logger) -> None:
             
             # Process as prompt
             print("\n[EAON] Processing...")
-            decision, report = orchestrator.run(prompt)
+            decision, report = orchestrator.run(prompt, history=history)
             
             # Display result
             print(f"\n[EAON] Intent: {decision.intent} | Model: {decision.model} | Mode: {decision.mode}")
@@ -184,6 +185,9 @@ def interactive_loop(orchestrator: Orchestrator, logger) -> None:
             if report.ok:
                 print(f"\n{report.output_text}")
                 print(f"\n[{report.model_used}] {report.inference_time_ms:.0f}ms")
+                history.extend(({"role": "user", "content": prompt},
+                                {"role": "assistant", "content": report.output_text}))
+                history = history[-12:]
             else:
                 print(f"\n[ERROR] {report.error}")
         
