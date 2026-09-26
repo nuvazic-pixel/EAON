@@ -5,6 +5,11 @@ local-first, Skills and the mock voice harness are dependency-light Python 3.11+
 prototypes. The complete verification environment below is **Python 3.12+**
 (the captured NumPy dependency requires it); it was tested on Python 3.12.14.
 
+For the original INTEL CLI plus gateway/interlock smoke check, install
+`requirements-local.txt` and run `python scripts/local_run.py`. Add `--prompt`
+or `--interactive` to use a local Ollama installation after the checks.
+See [Windows instructions](LOCAL_WINDOWS.md).
+
 ## Full verification environment
 
 ```bash

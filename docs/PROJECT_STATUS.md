@@ -10,6 +10,8 @@ classification and verified OS network isolation are still missing.
 The original INTEL orchestrator now dispatches through an exact-ID gateway;
 unknown IDs, empty output and failed Ollama calls return `ok=False`. The CAUC
 shadow path is not connected to this gateway.
+`scripts/local_run.py` provides a repeatable local smoke check and an optional
+Ollama prompt/interactive launch; the recovered components remain independent.
 
 **Recovered code** means source exists and was inspected. **Historical report**
 means behavior was reported without its complete runnable evidence. **Specified**

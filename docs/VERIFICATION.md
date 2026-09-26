@@ -66,6 +66,16 @@ No live model or network call was made.
 The root `python main.py --stats` startup check also succeeded with those local
 dependencies.
 
+## Local launcher update — 2026-09-26
+
+In a fresh Python 3.12 virtual environment, installed `requirements-local.txt` and
+ran `python scripts/local_run.py`: four gateway tests, 14 voice tests, INTEL stats,
+six mock samples and a valid 42-record journal passed. After installing
+`requirements-verify.txt`, `python scripts/local_run.py --all-tests` passed all
+seven isolated suites (**56 tests**), plus the CLI startup check. This run was on
+Linux; the PowerShell commands are provided for Windows but have not been run on
+Windows hardware. Neither run invoked a live model or microphone.
+
 ## Deliberately unverified
 
 - Ollama/model quality, original Porcupine/Whisper/Piper pipeline and real Sherpa ASR.

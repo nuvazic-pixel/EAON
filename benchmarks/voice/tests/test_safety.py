@@ -10,7 +10,7 @@ from eaon_c3.safety import (
 )
 
 
-class TestNetworkBoundary:
+class FakeNetworkBoundary:
     def __init__(self, blocked=True):
         self.blocked = blocked
 
@@ -25,7 +25,7 @@ class SafetyTests(unittest.TestCase):
         self.path = Path(self.directory.name) / "journal.jsonl"
         self.executor = MockToolExecutor()
         self.stop = EmergencyStop()
-        self.network = TestNetworkBoundary()
+        self.network = FakeNetworkBoundary()
         self.journal = StateJournal(self.path)
 
     def session(self, **overrides):
@@ -60,7 +60,7 @@ class SafetyTests(unittest.TestCase):
             (dict(dry_run=False), "dry_run_required"),
             (dict(executor=real), "mock_executor_required"),
             (dict(real_tool_registry=object()), "real_registry_must_be_disconnected"),
-            (dict(network_boundary=TestNetworkBoundary(False)), "outbound_network_not_blocked"),
+            (dict(network_boundary=FakeNetworkBoundary(False)), "outbound_network_not_blocked"),
             (dict(authorized_model_id="unknown"), "unknown_authorized_model_id"),
         )
         for overrides, reason in faults:
@@ -143,7 +143,7 @@ class SafetyTests(unittest.TestCase):
                                ("network", "outbound_network_not_blocked")):
             with self.subTest(change=change):
                 self.stop = EmergencyStop()
-                self.network = TestNetworkBoundary()
+                self.network = FakeNetworkBoundary()
                 session = self.session()
                 session.start()
                 if change == "stop":
