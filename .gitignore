@@ -33,5 +33,6 @@ logs/
 *.pem
 *.key
 # Local model weights
+/models/
 *.onnx
 *.gguf

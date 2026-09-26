@@ -43,3 +43,44 @@ interactivă folosește `scripts\local_run.py --interactive`.
 Acesta este CLI-ul INTEL existent plus verificarea simulată. Componentele din
 repo rămân module separate; Sherpa live, microfonul, izolarea de rețea a testului
 vocal și acțiunile fizice nu sunt integrate în acest launcher.
+
+## Interfață cu text și microfon local
+
+Folosește folderul **EAON** conectat la `https://github.com/nuvazic-pixel/EAON`.
+Dacă ai `EAON` și `EAON2`, verifică `git remote -v` și `git status --short`
+în fiecare înainte să alegi folderul; nu suprascrie modificările locale. Dacă
+nu ai un clone curat, creează un folder nou cu `git clone`.
+
+În PowerShell, din folderul repo-ului:
+
+```powershell
+git switch main
+git pull --ff-only origin main
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-voice.txt
+.\.venv\Scripts\python.exe scripts\setup_voice_model.py
+ollama pull llama3
+.\.venv\Scripts\python.exe scripts\voice_ui.py
+```
+
+Deschide `http://127.0.0.1:8501` în browser și permite accesul la microfon
+pentru acest site local. Înregistrează mesajul, oprește înregistrarea, verifică
+transcrierea, apoi apasă **Trimite mesajul vocal**. Alternativ, tastează direct
+în chat. Pentru a auzi răspunsul, apasă **Ascultă răspunsul**; calitatea și
+disponibilitatea vocii depind de vocile instalate în browser/Windows. În
+sidebar poți alege Mistral (după `ollama pull mistral`) sau limba de vorbire.
+
+Instalarea Sherpa descarcă din release-ul oficial modelul multilingv Whisper
+tiny într-un folder `models/` ignorat de Git. Fișierele pot fi mari; este
+necesară o conexiune la internet **la instalare**. După instalare, transcrierea
+rulează local pe CPU, chiar dacă ai RTX 4070. La prima pornire, modelul poate
+avea nevoie de câteva secunde pentru încărcare; modelul tiny poate greși
+cuvinte, așa că verifică transcrierea. Textul chatului este trimis doar către
+Ollama pe `127.0.0.1:11434`; Streamlit ascultă pe `127.0.0.1:8501`.
+
+Butonul de voce folosește funcția de citire a browserului; pentru folosire fără
+internet, selectează o voce instalată local. Interfața nu ascultă permanent,
+nu are cuvânt de activare și nu lansează comenzi sau acțiuni fizice. Istoricul
+chatului este păstrat în sesiunea browserului, nu salvat intenționat pe disc.
+Această interfață nu măsoară sau certifică izolarea completă a proceselor la
+nivelul sistemului de operare.
