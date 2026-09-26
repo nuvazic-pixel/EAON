@@ -39,7 +39,7 @@ Historical planned sync: **Monday 2026-09-21, 09:00–09:30 Europe/Berlin**. Thi
 records the plan; it does not schedule a reminder or claim the session occurred.
 
 Discussed scripts: `capture_audio`, `run_pipeline`, `inject_scenarios`,
-`safety_interlock`, `summarize_results`. Their full implementations are missing.
+`safety_interlock`, `summarize_results`. Their full live implementations are missing.
 
 The staged run was a 60-minute smoke/dry-run, followed by 8-hour and 48-hour stages
 only after the earlier gates pass. The later smoke corpus was 30 RO/DE/EN commands.
@@ -67,6 +67,34 @@ All conditions must be true together:
 Any false/unknown condition blocks the run. A dry-run flag alone is insufficient.
 The existing C3 command adapter and INTEL mode flags do not implement these conditions.
 
+## Mock-only policy slice (2026-09-26)
+
+`benchmarks/voice/src/eaon_c3/safety.py` now contains a **separate, in-process**
+`DryRunSession`. It requires `dry_run=True`, the exact `MockToolExecutor` type,
+no real registry reference, a network-boundary check returning `True`, a valid
+writable State Journal, an armed emergency stop and an allowlisted authorized
+model ID before it starts. It repeats the mutable checks before every attempt
+and immediately before the mock call. Unknown, missing or changed model IDs,
+TTS/unknown sources, missing wake, low intent confidence, disallowed tools and
+invalid arguments are blocked before any mock call. A journal write failure trips
+the stop. The mock can only return `SIMULATED` with `real_world_effect=False`.
+
+Events use `eaon.trajectory/v1` inside the existing hash-chained journal:
+`session_id`, `turn_id`, `span_id`, `parent_span_id`, wake/source,
+`raw_model_output` hash, parsed-call argument hash, policy decision, simulated
+call, tool result and postcondition. A `shadow_recommendation` is recorded but
+cannot select a model or grant a capability. Raw model output and arguments do
+not enter this trajectory. The existing benchmark report still has transcripts
+and needs a separate retention policy.
+
+The `NetworkBoundary` interface is intentionally unverified by default. Tests
+inject a **fake** boundary to exercise policy failures; that fake is not evidence
+that the OS blocks outbound traffic. The real Sherpa wrapper, trusted audio-source
+gate, actual network isolation, physical emergency-stop wiring and independent
+journal anchoring are still absent. Do not connect this policy slice to the
+`command` adapter or physical tools and claim a safe live run. The C3 command
+adapter remains a separate benchmark mechanism, not a sandbox.
+
 ## Acceptance/reporting
 
 Hard safety requirements: **zero real tool executions, zero unauthorized actions,
@@ -87,6 +115,7 @@ Raw audio stays out of the journal; benchmark transcripts need explicit retentio
 
 ## Pending work
 
-Implement the real wrapper and fail-closed interlock, validate no-wake/false-wake/
-missing-journal/emergency-stop scenarios, then run on the intended hardware. Mock
-success is not authorization to connect physical tools.
+Implement the Sherpa wrapper, an externally enforced and verified network boundary,
+and a trusted wake/source gate; then integrate them with the mock-only policy and
+measure the full no-wake/false-wake/journal/stop scenarios on the intended hardware.
+Mock success is not authorization to connect physical tools.

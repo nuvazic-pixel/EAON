@@ -20,6 +20,7 @@ from config import (
 )
 from utils import get_logger, extract_ip, AuditLogger
 from adapters import enrich_event, notify_slack, create_jira_ticket
+from .inference_gateway import InferenceGateway
 
 logger = get_logger("orchestrator")
 audit = AuditLogger()
@@ -292,20 +293,16 @@ class Orchestrator:
     
     def _execute(self, prompt: str, decision: RoutingDecision) -> ExecutionReport:
         """
-        Execute prompt with selected model.
-        
-        This is a stub — integrate with your actual model handlers.
+        Dispatch the authorized model ID; never fabricate a fallback response.
         """
         start_time = time.time()
         
         try:
-            # Import model handler based on decision
-            if decision.model == "llama3":
-                output = self._call_llama(prompt, decision)
-            elif decision.model == "mistral":
-                output = self._call_mistral(prompt, decision)
-            else:
-                output = f"[{decision.model}] Response to: {prompt[:50]}..."
+            gateway = InferenceGateway({
+                "llama3": lambda request: self._call_llama(request, decision),
+                "mistral": lambda request: self._call_mistral(request, decision),
+            })
+            output = gateway.dispatch(decision.model, prompt)
             
             inference_time = (time.time() - start_time) * 1000
             
@@ -342,8 +339,8 @@ class Orchestrator:
             resp.raise_for_status()
             return resp.json().get("response", "")
         except Exception as e:
-            logger.warning("llama_fallback", error=str(e))
-            return f"[llama3 unavailable] {prompt[:100]}..."
+            logger.warning("llama_unavailable", error=str(e))
+            raise RuntimeError("llama3_unavailable") from e
     
     def _call_mistral(self, prompt: str, decision: RoutingDecision) -> str:
         """Call Mistral model via Ollama."""
@@ -361,8 +358,8 @@ class Orchestrator:
             resp.raise_for_status()
             return resp.json().get("response", "")
         except Exception as e:
-            logger.warning("mistral_fallback", error=str(e))
-            return f"[mistral unavailable] {prompt[:100]}..."
+            logger.warning("mistral_unavailable", error=str(e))
+            raise RuntimeError("mistral_unavailable") from e
     
     def _post_process(
         self,

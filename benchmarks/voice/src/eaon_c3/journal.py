@@ -63,17 +63,27 @@ class StateJournal:
         })
 
 
-def verify(path: str | Path) -> tuple[bool, int, str | None]:
+def verify(path: str | Path, *, expected_head: str | None = None) -> tuple[bool, int, str | None]:
     previous = GENESIS
     count = 0
-    with Path(path).open(encoding="utf-8") as stream:
-        for count, line in enumerate(stream, 1):
-            record = json.loads(line)
-            claimed = record.pop("hash", None)
-            if record.get("previous_hash") != previous:
-                return False, count, "previous_hash mismatch"
-            actual = hashlib.sha256(_canonical(record)).hexdigest()
-            if claimed != actual:
-                return False, count, "record hash mismatch"
-            previous = claimed
+    try:
+        with Path(path).open(encoding="utf-8") as stream:
+            for count, line in enumerate(stream, 1):
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    return False, count, "malformed record"
+                if not isinstance(record, dict):
+                    return False, count, "malformed record"
+                claimed = record.pop("hash", None)
+                if record.get("previous_hash") != previous:
+                    return False, count, "previous_hash mismatch"
+                actual = hashlib.sha256(_canonical(record)).hexdigest()
+                if claimed != actual:
+                    return False, count, "record hash mismatch"
+                previous = claimed
+    except (OSError, UnicodeError):
+        return False, count, "journal unavailable"
+    if expected_head is not None and previous != expected_head:
+        return False, count, "journal head mismatch"
     return True, count, None

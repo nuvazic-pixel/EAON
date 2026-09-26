@@ -3,6 +3,14 @@
 Snapshot: **2026-09-20**. Inspected sources: original `main` at `89ee79f`, Knowledge
 Gap head `971fc49`, and the recovered artifacts recorded in the manifest.
 
+Update **2026-09-26**: The voice harness has a separate mock-only
+`eaon_c3.safety.DryRunSession` policy and adversarial unit tests. This does not
+change the historical snapshot below: Sherpa capture, trusted wake/source
+classification and verified OS network isolation are still missing.
+The original INTEL orchestrator now dispatches through an exact-ID gateway;
+unknown IDs, empty output and failed Ollama calls return `ok=False`. The CAUC
+shadow path is not connected to this gateway.
+
 **Recovered code** means source exists and was inspected. **Historical report**
 means behavior was reported without its complete runnable evidence. **Specified**
 means an agreed design/test plan. **External artifact** is a separate deliverable.

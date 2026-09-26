@@ -97,6 +97,12 @@ The [voice/interlock protocol](docs/topics/VOICE_AND_SAFETY.md),
 implementation status. No consciousness, AGI, multiverse detection or universal
 scientific-discovery capability is claimed.
 
+The voice module also has an isolated mock-only interlock policy and adversarial
+tests. Its network-boundary test double does not verify real OS isolation; the
+live Sherpa and physical-tool path remains unconnected.
+The root INTEL path now rejects missing/unknown model IDs and failed model calls
+instead of returning a fabricated successful response.
+
 ## Provenance and privacy
 
 [Recovery notes](docs/RECOVERY.md) describe sources, unavailable pieces, privacy
