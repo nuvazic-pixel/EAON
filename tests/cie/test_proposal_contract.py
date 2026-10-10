@@ -62,4 +62,3 @@ def test_blind_is_immutable():
         blind.hypothesis = "Modified"
 
     assert blind.hypothesis == "H1"
-
