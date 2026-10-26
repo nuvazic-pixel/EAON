@@ -13,7 +13,7 @@ class SyntheticBioIngestion:
 
     def generate_batch(self, count: int = 100,
                        start_time: str = "2026-01-01T10:00:00Z",
-                       sampling_frequency_seconds: int = 60) -> list[dict[str, Any]]:
+                       sampling_frequency_seconds: int = 60,\n                       metric: str = "heart_rate", unit: str = "bpm") -> list[dict[str, Any]]:
         if count < 0 or sampling_frequency_seconds <= 0:
             raise ValueError("count must be nonnegative and frequency positive")
         start = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
@@ -25,9 +25,9 @@ class SyntheticBioIngestion:
                 "subject_id": self.subject_id,
                 "timestamp": (start + timedelta(seconds=i * sampling_frequency_seconds))
                     .isoformat().replace("+00:00", "Z"),
-                "metric": "heart_rate",
+                "metric": metric,
                 "value": float(72 + i % 5 - 2),
-                "unit": "bpm",
+                "unit": unit,
                 "source": "synthetic",
                 "quality_flag": "valid",
             }
