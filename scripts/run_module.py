@@ -12,6 +12,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULES = {
+    "biolab": ("modules/biolab", "src", ["-m", "eaon_biolab.cli"]),
     "genesis": ("modules/genesis", ".", ["-m", "eaon.cli"]),
     "local-first": ("modules/local_first", "src", ["-m", "eaon.cli"]),
     "voice": ("benchmarks/voice", "src", ["-m", "eaon_c3"]),
