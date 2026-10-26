@@ -1,25 +1,30 @@
 """EAON launcher-compatible offline BioLab CLI."""
 import argparse
 import json
+from .config import CONFIG_PATH, load_config
 from .ingestion import SyntheticBioIngestion
+from .provenance import build_audit
 from .validation import BioDataValidator
-
-DEFAULT_CONFIG = {
-    "target_metric": "heart_rate", "expected_unit": "bpm",
-    "validation_rules": {"min_value": 30, "max_value": 220},
-}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="EAON BioLab M0")
     parser.add_argument("command", choices=["smoke"])
     parser.add_argument("--count", type=int, default=100)
+    parser.add_argument("--config", default=str(CONFIG_PATH))
     args = parser.parse_args()
-    observations = SyntheticBioIngestion().generate_batch(args.count)
-    validator = BioDataValidator(DEFAULT_CONFIG)
+    config = load_config(args.config)
+    observations = SyntheticBioIngestion().generate_batch(
+        args.count,
+        sampling_frequency_seconds=config["sampling_frequency_seconds"],
+        metric=config["target_metric"],
+        unit=config["expected_unit"],
+    )
+    validator = BioDataValidator(config)
     errors = [validator.validate_observation(item) for item in observations]
-    print(json.dumps({"experiment_id": "EXP-BIO-001", "count": len(observations),
-                      "rejected": sum(bool(item) for item in errors)}, sort_keys=True))
+    audit = build_audit(args.config, observations, sum(bool(item) for item in errors))
+    audit["experiment_id"] = config["experiment_id"]
+    print(json.dumps(audit, sort_keys=True))
     return int(any(errors))
 
 
