@@ -4,6 +4,7 @@ import argparse
 import json
 from typing import Any
 
+from eaon.memory import MemoryIntegrityError
 from eaon.orchestrator import EAONOrchestrator
 
 
@@ -40,6 +41,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    try:
+        return _run_command(args)
+    except MemoryIntegrityError as exc:
+        print_result(
+            {"ok": False, "error": "memory_integrity_failed", "errors": exc.errors},
+            raw_json=bool(getattr(args, "json", False)),
+        )
+        return 1
+
+
+def _run_command(args: argparse.Namespace) -> int:
     orchestrator = EAONOrchestrator(args.memory)
     raw_json = bool(getattr(args, "json", False))
 
