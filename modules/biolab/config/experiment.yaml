@@ -1,0 +1,9 @@
+experiment_id: "EXP-BIO-001"
+target_metric: "heart_rate"
+expected_unit: "bpm"
+sampling_frequency_seconds: 60
+validation_rules:
+  min_value: 30
+  max_value: 220
+  allow_missing: false
+  strict_timestamps: true
