@@ -70,6 +70,9 @@ It does not call an LLM or execute its suggested next action. The default journa
 | Voice C3/A1/B2 | [benchmarks/voice](benchmarks/voice/) | RO/DE/EN scoring, wake metrics, stage latencies, State Journal |
 | MetaBench 0.1 | [benchmarks/metabench](benchmarks/metabench/) | Seeded cognitive tasks, mock/Ollama adapters, JSON/HTML reports |
 | BHIDT verification 0.4 | [integrations/bhidt](integrations/bhidt/) | Recompute vs journal, fingerprint, four verdicts, EAON evidence adapter |
+| CIE contracts 0.1 | [modules/cie](modules/cie/) | Typed proposals, blind critique, evidence provenance gate |
+| ENCR policy 0.1 | [modules/governance](modules/governance/) | Deterministic policy decisions; no executor or OS permissions |
+| BioLab M0 | [modules/biolab](modules/biolab/) | Synthetic observations, strict validation, reproducible audit hashes |
 | EAON-Red | [research/eaon_red](research/eaon_red/) | Offline security-benchmark search source; SDK not bundled |
 | Cognitive graph schema | [schemas/cognitive_graph_v0_1.json](schemas/cognitive_graph_v0_1.json) | Reusable schema without the populated personal profile |
 
@@ -107,8 +110,8 @@ python -m pip install -r requirements-verify.txt
 python scripts/verify_workspace.py
 ```
 
-The seven isolated suites pass, including local voice UI boundary tests in the
-root suite. The [verification report](docs/VERIFICATION.md) captures the earlier
+The workspace verifier runs isolated suites, including CIE/ENCR in the root
+suite and BioLab separately. It reports failures and missing dependencies explicitly. The [verification report](docs/VERIFICATION.md) captures the earlier
 recovery baseline and its limits.
 Mock tests do not establish live speech accuracy, model quality, database deployment
 or real-world safety.
@@ -144,3 +147,10 @@ populated personal graphs and generated caches are excluded.
 The April baseline used **Emergent Autonomous Orchestration Network**. Its
 [historical README](docs/legacy/README_INTEL_2_0.md) is retained; the current project
 name is **Edge AI Orchestration Node**.
+
+## Consolidation update — 30 October 2026
+
+CIE and ENCR v0.1 plus BioLab M0 are included as independent experiments.
+The adaptive cloud router remains on its feature branch pending adapter and
+constraint fixes. Existing UI/CLI model dispatch is unchanged.
+See [integration provenance and acceptance](docs/CONSOLIDATION_2026_10_30.md).

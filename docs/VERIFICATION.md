@@ -1,3 +1,58 @@
+# Verification index
+
+## Current consolidation check — 30 October 2026
+
+The current runner emits per-suite JSON and logs, plus an overall status.
+It runs packages in separate Python processes/import roots; do not collect all
+historical packages with one global pytest command.
+
+Local check: Windows, Python 3.14.0, existing dependency directory supplied
+explicitly with `--dependency-path`; no packages were downloaded or installed.
+**137 tests and 24 subtests passed**, plus the INTEL CLI startup check:
+
+| Suite | Passed tests |
+|---|---:|
+| Verifier isolation/reporting | 6 |
+| Root ingestion/gateway/UI/CIE/ENCR | 63 |
+| Genesis SELF | 5 |
+| Local-first | 2 |
+| Voice C3 | 14 |
+| MetaBench | 8 |
+| BHIDT | 18 |
+| BioLab | 21 |
+
+**Overall status is FAIL**, because the Cognitive Twin helper suite reports
+`DEPENDENCY_ERROR` for missing `pgvector` and `psycopg`. Its three tests were
+not run locally. This is not a waived or silently skipped suite.
+
+The GitHub workflow installs `requirements-verify.txt` and runs the full
+verifier on Python 3.12, Ubuntu and Windows. Remote results must be read from
+the workflow run for the proposed commit; local results do not imply CI success.
+
+```sh
+python scripts/verify_workspace.py --report-dir verification-results
+python scripts/verify_workspace.py --list
+python scripts/verify_workspace.py --suite root --suite biolab
+```
+
+The child process receives an allowlist of OS environment variables, a fresh
+home/temp directory and disabled integration flags. It ignores inherited Python
+options and pytest plugins. A Python audit hook rejects sockets, subprocesses
+and dotenv reads; even a caught violation fails the suite. This is a guard for
+these Python tests, not OS isolation against arbitrary native code.
+
+Explicit fixtures: Local-first sees Ollama unavailable; root/startup disable
+urllib3's IPv6 capability probe; BHIDT uses static platform fingerprint metadata
+to avoid Windows OS subprocess probes. No real network, microphone, model,
+database or physical tool behavior is certified. JSON reports retain fixture
+names and separate test/subtest counts.
+
+## Historical results
+
+The reports below describe the sources and environments recorded on their dates.
+The old totals of 40 and 56 are historical baselines, not the current test count.
+
+
 # Consolidation verification — 2026-09-20
 
 Environment: Python **3.12.14**, Linux, isolated virtual environment with

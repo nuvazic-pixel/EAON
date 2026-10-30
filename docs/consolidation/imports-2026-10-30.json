@@ -1,0 +1,187 @@
+{
+  "base_commit": "36f2303686067c9f4b8e13c40114a0eca55ca818",
+  "files": [
+    {
+      "path": "docs/ENCR_V0_1.md",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "02d2112b100b9cf516c22e06a4ceef6784753bec",
+      "integrated_blob": "02d2112b100b9cf516c22e06a4ceef6784753bec",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/cie/__init__.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "integrated_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/cie/critique.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "777eecc0103ddce03947a5c7fb901f5a125d3211",
+      "integrated_blob": "777eecc0103ddce03947a5c7fb901f5a125d3211",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/cie/evidence.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "343b78ef4a50ced15d5449c859670ad26808d34b",
+      "integrated_blob": "343b78ef4a50ced15d5449c859670ad26808d34b",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/cie/evidence_gate.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "2a4317f1a78725c5d945c1a9b03a80697fe5e447",
+      "integrated_blob": "2a4317f1a78725c5d945c1a9b03a80697fe5e447",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/cie/proposal.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "4a405338f0485be10838472c438036fb9194a33d",
+      "integrated_blob": "4a405338f0485be10838472c438036fb9194a33d",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/governance/__init__.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "b425826f0a61d08463dcd738a2baa5512aa27797",
+      "integrated_blob": "b425826f0a61d08463dcd738a2baa5512aa27797",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/governance/fallback_controller.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "db992e0f1c25a17ae98ce92761f6ac16baaa5866",
+      "integrated_blob": "db992e0f1c25a17ae98ce92761f6ac16baaa5866",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/governance/normative_conflict.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "704aab6557460b95f0bf542e22957be1e9c5c0bd",
+      "integrated_blob": "704aab6557460b95f0bf542e22957be1e9c5c0bd",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/governance/policy_kernel.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "813dc96daa6c4a202831fa965b5f58459dbd63bd",
+      "integrated_blob": "813dc96daa6c4a202831fa965b5f58459dbd63bd",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "scripts/demo_encr.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "debb33d56f56e7bef249e1b57cd4f08156a6688d",
+      "integrated_blob": "debb33d56f56e7bef249e1b57cd4f08156a6688d",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "tests/cie/test_critique_contract.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "b8f19c1bfc23e450bdb7966fe9c09767f3554419",
+      "integrated_blob": "b8f19c1bfc23e450bdb7966fe9c09767f3554419",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "tests/cie/test_evidence.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "4d4cde42c41a38466fe06e0ae3a73e650b8dcdcf",
+      "integrated_blob": "4d4cde42c41a38466fe06e0ae3a73e650b8dcdcf",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "tests/cie/test_evidence_gate.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "840e998d88fb297401a7331480d6535a6b9cf055",
+      "integrated_blob": "840e998d88fb297401a7331480d6535a6b9cf055",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "tests/cie/test_proposal_contract.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "df56b399bcd6f471525fc9ec2ceaed0af2a25834",
+      "integrated_blob": "df56b399bcd6f471525fc9ec2ceaed0af2a25834",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "tests/governance/test_encr.py",
+      "source_commit": "025fcb3b81a76afa68ac988eedbdbfb7a341e64a",
+      "source_blob": "62cd0d4dddb0c42de345e5ed28af8a669f032862",
+      "integrated_blob": "62cd0d4dddb0c42de345e5ed28af8a669f032862",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/biolab/config/experiment.yaml",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "aed31b1c0d486d84111030a68b1ed974803e7bf0",
+      "integrated_blob": "aed31b1c0d486d84111030a68b1ed974803e7bf0",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/biolab/README.md",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "97973bf5ea946e823ee513eb8b9190b54f4f8cdd",
+      "integrated_blob": "f1362b83a742762804eff7f8011cb26a9be5200b",
+      "modified_in_consolidation": true
+    },
+    {
+      "path": "modules/biolab/src/eaon_biolab/__init__.py",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "2f2af30a73ea2a007caf013f0fb985a3f9a90183",
+      "integrated_blob": "2f2af30a73ea2a007caf013f0fb985a3f9a90183",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/biolab/src/eaon_biolab/cli.py",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "824428e4f284b332a56d9366a9ebdd2f3f1b6af4",
+      "integrated_blob": "824428e4f284b332a56d9366a9ebdd2f3f1b6af4",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/biolab/src/eaon_biolab/config.py",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "bfb2016ee63532db93fca16710691a592013f231",
+      "integrated_blob": "bfb2016ee63532db93fca16710691a592013f231",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/biolab/src/eaon_biolab/ingestion.py",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "4769fb8664550b71f1ccdf96d1505c0c67380c78",
+      "integrated_blob": "4769fb8664550b71f1ccdf96d1505c0c67380c78",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/biolab/src/eaon_biolab/provenance.py",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "3b2b76403b871119b9520b2cd205f1b72339dae5",
+      "integrated_blob": "3b2b76403b871119b9520b2cd205f1b72339dae5",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/biolab/src/eaon_biolab/validation.py",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "119ce5ae629c9902d7309593240ce85002810dfa",
+      "integrated_blob": "119ce5ae629c9902d7309593240ce85002810dfa",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/biolab/tests/test_foundation.py",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "1ddc7ca215e71f7d39a6e470d7b28ceeb354ea9a",
+      "integrated_blob": "1ddc7ca215e71f7d39a6e470d7b28ceeb354ea9a",
+      "modified_in_consolidation": false
+    },
+    {
+      "path": "modules/biolab/tests/test_validation.py",
+      "source_commit": "bd2c0aac02117c18c3ba8594358dd4ce3fcfaf38",
+      "source_blob": "6f217be42ba9224bbeb58fe11a95c35d700e2a0c",
+      "integrated_blob": "6f217be42ba9224bbeb58fe11a95c35d700e2a0c",
+      "modified_in_consolidation": false
+    }
+  ]
+}

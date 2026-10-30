@@ -1,0 +1,41 @@
+name: Offline verification
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Python 3.12 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-verify.txt
+      # Package installation is the only networked phase; the verifier installs nothing.
+      - name: Install declared verification dependencies
+        run: python -m pip install -r requirements-verify.txt
+      - name: Run isolated offline suites
+        run: python scripts/verify_workspace.py --report-dir verification-results
+      - name: Preserve per-suite results (including failures)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-${{ matrix.os }}-py312
+          path: verification-results/
+          if-no-files-found: warn
+          retention-days: 14

@@ -18,6 +18,7 @@ MODULES = {
     "metabench": ("benchmarks/metabench", "src", ["-m", "eaon_metabench.cli"]),
     "skills": ("modules/skills", ".", ["examples/run_router.py"]),
     "bhidt-demo": ("integrations/bhidt", ".", ["examples/verification_demo_v04.py"]),
+    "biolab": ("modules/biolab", "src", ["-m", "eaon_biolab.cli"]),
 }
 
 
