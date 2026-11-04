@@ -57,6 +57,20 @@ creates a deterministic council-style response and appends hash-linked JSONL rec
 It does not call an LLM or execute its suggested next action. The default journal is
 `modules/genesis/data/memory.jsonl`, excluded from Git.
 
+### Project continuity
+
+The standard-library continuity kernel keeps project goals, bounded tasks,
+source-backed decisions, hypotheses and unknowns across sessions:
+
+```sh
+python scripts/run_module.py kernel --db data/continuity.db init
+python scripts/run_module.py kernel --db data/continuity.db project demo "Continuity demo"
+python scripts/run_module.py kernel --db data/continuity.db recover demo
+```
+
+Use a new database path for `init`. See the [operating guide](docs/CONTINUITY_KERNEL.md)
+for revisions, checkpoints, memory providers and the Synapse evidence boundary.
+
 ## Recovered components
 
 | Component | Location | What exists |
@@ -118,9 +132,10 @@ or real-world safety.
 
 ## Project direction
 
-The next integration is a continuity kernel: confirmed memory, hypotheses and
-unknowns; project state cards; one active goal; bounded tasks; retrieval before
-reasoning; verification and checkpoint after action.
+The local continuity kernel now provides confirmed memory, hypotheses and
+unknowns, project state cards, one active goal, bounded tasks, evidence retrieval
+and explicit verification/checkpoints. Connecting every module and the voice/UI
+workflow to that kernel remains further integration work.
 
 The [voice/interlock protocol](docs/topics/VOICE_AND_SAFETY.md),
 [memory design](docs/topics/MEMORY_AND_CONTINUITY.md),
