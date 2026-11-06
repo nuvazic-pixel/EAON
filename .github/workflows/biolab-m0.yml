@@ -1,0 +1,46 @@
+name: EAON BioLab M0
+
+on:
+  push:
+    branches:
+      - feature/biolab-m0-foundation
+    paths:
+      - "modules/biolab/**"
+      - "scripts/run_module.py"
+      - ".github/workflows/biolab-m0.yml"
+  pull_request:
+    paths:
+      - "modules/biolab/**"
+      - "scripts/run_module.py"
+      - ".github/workflows/biolab-m0.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    name: BioLab M0 / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.14"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install pytest
+        run: python -m pip install pytest==9.0.3
+      - name: Compile BioLab
+        run: python -m compileall -q modules/biolab/src
+      - name: Test M0
+        working-directory: modules/biolab
+        env:
+          PYTHONPATH: src
+        run: python -m pytest tests -v
+      - name: Run deterministic synthetic smoke test
+        run: python scripts/run_module.py biolab smoke --count 100
