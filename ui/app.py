@@ -20,6 +20,8 @@ load_dotenv(ROOT / ".env")
 from core import Orchestrator  # noqa: E402
 from core.ollama_client import OllamaError, MAX_PROMPT_CHARS, installed_models  # noqa: E402
 from ui.voice_backend import VoiceUIError, create_recognizer, model_directory, model_ready, transcribe  # noqa: E402
+from core.project_context import ProjectContextError  # noqa: E402
+from ui.project_binding import CONTEXT_PROBLEMS, attach_project, detach_project, reset_conversation  # noqa: E402
 
 st.set_page_config(page_title="EAON • conversație locală", page_icon="🎙️", layout="centered")
 st.html("""
@@ -78,6 +80,7 @@ def send_message(prompt: str, source: str) -> None:
             "model_missing": f"Modelul lipsește. Rulează: ollama pull {decision.model}",
             "invalid_prompt": "Mesajul trebuie să aibă între 1 și 4000 de caractere.",
             "empty_model_response": "Ollama a trimis un răspuns gol. Încearcă din nou.",
+            **CONTEXT_PROBLEMS,
         }
         st.error(problems.get(report.error, f"Cererea a eșuat ({report.error})."))
         return
@@ -110,6 +113,45 @@ with st.sidebar:
     language_name = st.selectbox("Limba vorbită", ("Română", "Deutsch", "English", "Automat"))
     language = {"Română": "ro", "Deutsch": "de", "English": "en", "Automat": ""}[language_name]
     browser_language = language or "ro"
+    st.subheader("Proiect")
+    st.caption("Conectează un proiect existent pentru a folosi starea lui în conversație.")
+    with st.form("project_binding"):
+        project_db = st.text_input("Fișierul proiectului", value="data/continuity.db")
+        project_id = st.text_input("Identificator proiect", value="demo")
+        with st.expander("Documente din Synapse"):
+            use_synapse = st.checkbox("Include dovezi din Synapse")
+            synapse_url = st.text_input("Adresa locală Synapse", value="http://127.0.0.1:8000")
+            collection_id = st.text_input("Colecția Synapse")
+            st.caption("Accesul folosește SYNAPSE_TOKEN configurat pe acest calculator.")
+        connect_project = st.form_submit_button("Conectează proiectul")
+    if connect_project:
+        try:
+            attach_project(st.session_state, project_db.strip(), project_id.strip(),
+                           synapse_url=synapse_url.strip() if use_synapse else None,
+                           collection_id=collection_id.strip() if use_synapse else None)
+        except ProjectContextError as exc:
+            st.error(CONTEXT_PROBLEMS.get(str(exc), "Nu pot conecta proiectul."))
+        else:
+            st.rerun()
+    context = st.session_state.get("project_context")
+    if context is not None:
+        try:
+            card = context.project_card()
+        except ProjectContextError as exc:
+            st.error(CONTEXT_PROBLEMS.get(str(exc), "Proiectul nu este disponibil."))
+        else:
+            st.success("Proiect conectat: " + card["title"])
+            with st.expander("Starea proiectului"):
+                goal, task = card["active_goal"], card["next_task"]
+                st.write("Obiectiv: " + (goal["text"] if goal else "Niciun obiectiv activ"))
+                st.write("Următorul pas: " + (task["text"] if task else "Nicio sarcină în așteptare"))
+                labels = {"confirmed": "Confirmat cu sursă", "hypothesis": "Ipoteză", "unknown": "Necunoscut"}
+                for key, memory in card["memories"].items():
+                    st.text(f"{labels[memory['status']]} · {key}\n{memory['text']}")
+                st.caption("Starea este citită din nou la fiecare mesaj. Conversația nu o modifică automat.")
+        if st.button("Deconectează proiectul", use_container_width=True):
+            detach_project(st.session_state)
+            st.rerun()
     try:
         available = installed_models()
     except OllamaError:
@@ -125,11 +167,7 @@ with st.sidebar:
     else:
         st.info("Pentru microfon: py -3.12 scripts\\setup_voice_model.py")
     if st.button("Șterge conversația", use_container_width=True):
-        st.session_state.messages = []
-        st.session_state.draft = ""
-        st.session_state.last_recording = None
-        st.session_state.draft_stt_ms = None
-        st.session_state.microphone_version = st.session_state.get("microphone_version", 0) + 1
+        reset_conversation(st.session_state)
         st.rerun()
     stats = st.session_state.orchestrator.get_stats()
     col_a, col_b = st.columns(2)

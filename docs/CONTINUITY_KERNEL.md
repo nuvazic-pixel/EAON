@@ -127,6 +127,56 @@ For local evidence, save source-backed memories with `--kind evidence`, then:
 python -m eaon_kernel --db data/continuity.db context demo "local state" --budget-chars 6000
 ```
 
+## Use the project in a local conversation
+
+The root text CLI and voice/chat UI can explicitly attach an existing database
+and project. With Ollama running locally and the selected model installed:
+
+```sh
+python main.py --project-db data/continuity.db --project-id demo --prompt "What is our next task?"
+python main.py --project-db data/continuity.db --project-id demo
+```
+
+Supplying the project flags forces local mode. The orchestrator rereads and
+verifies the project before each model call, routes on the user's original
+question, and supplies project context separately as data. Unknowns and
+hypotheses retain their labels. Missing or corrupt stores, required evidence
+gaps and context-budget failures stop inference with a stable error code.
+No conversation response is automatically appended or confirmed in the journal.
+
+The optional `--context-budget` defaults to 16,000 characters and bounds the
+complete serialized context JSON, including source metadata and escaping. A
+large active project may be rejected; the JSON is never sliced to fit. This
+budget is separate from user-prompt and recent-chat limits.
+
+Synapse retrieval is optional and uses the server environment token:
+
+```sh
+python main.py --project-db data/synapse-context.db --project-id project-id --synapse-url http://127.0.0.1:8000 --collection-id OWNED_COLLECTION_UUID --require-source DOCUMENT_ID:CHUNK_ID --context-budget 16000 --prompt "What does this source establish?"
+```
+
+Repeat `--require-source` for multiple mandatory fragments. The project owner
+must match the authenticated Synapse user. This conversation integration accepts
+only local Synapse endpoints; it does not enable remote-provider opt-in.
+
+In the UI, use **Proiect** to select the existing database file and project ID.
+The sidebar reads current state without editing it. The optional Synapse form
+uses `SYNAPSE_TOKEN` configured on the server and does not display or save the
+token as a UI setting. Attaching, switching or detaching a project clears the
+previous conversation, voice draft and recording state. A failed attachment
+leaves the existing project and pending input intact. **Șterge conversația**
+clears chat while keeping the selected project.
+
+These integrations provide source context to local models. They do not measure
+model quality, prove that a generated answer follows the evidence, or authorize
+tool actions.
+
+The request report exposes `context_summary.memory_use`: delivery is confirmed
+only after a valid model response, while citation, decision influence, observed
+effect and redundancy remain `null` until independently evaluated. No such
+observation is automatically written into the kernel. See the
+[6 November brief and acceptance plan](briefs/2026-11-06.md).
+
 ## Genesis and Synapse boundaries
 
 `GenesisEvidenceProvider(path, owner_id="local", expected_head=None)` is a

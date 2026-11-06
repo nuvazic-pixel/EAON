@@ -35,6 +35,10 @@ class TurnEvent:
             "unknown_model_id", "invalid_prompt", "model_missing", "ollama_unavailable",
             "ollama_http_error", "ollama_invalid_response", "empty_model_response",
             "llama3_unavailable", "mistral_unavailable",
+            "context_invalid_configuration", "context_requires_local_mode",
+            "context_integrity_failed", "context_project_unavailable", "context_owner_mismatch",
+            "context_budget_exceeded", "context_retrieval_failed", "context_required_evidence_missing",
+            "context_changed_during_retrieval", "context_invalid_payload",
         }
         return cls(
             request_id=request_id, source=source, intent=intent, model=model,

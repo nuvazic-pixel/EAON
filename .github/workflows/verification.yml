@@ -64,3 +64,24 @@ jobs:
       - run: python -m pip install -r .contract-synapse/requirements-contract-tests.txt
       - name: Exercise real HTTP schema with signed synthetic users
         run: python scripts/probe_synapse_contract.py --synapse-root .contract-synapse
+  project-ui:
+    name: Project attachment in Streamlit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-ui-contracts.txt
+      - run: python -m pip install -r requirements-ui-contracts.txt
+      - name: Exercise actual UI with synthetic inference and temporary state
+        env:
+          INTEL_ENABLED: "false"
+          SLACK_ENABLED: "false"
+          JIRA_ENABLED: "false"
+          REDIS_ENABLED: "false"
+        run: python scripts/probe_project_ui.py

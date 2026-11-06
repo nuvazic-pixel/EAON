@@ -28,9 +28,10 @@ except ImportError:
 from config import init_settings, get_settings, OrchestratorMode
 from utils import setup_logging, get_logger
 from core import Orchestrator
+from core.project_context import ProjectContext, ProjectContextError
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv=None) -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="EAON 2.0 - Emergent Autonomous Orchestration Network",
@@ -82,7 +83,21 @@ Examples:
         help="Show version and exit",
     )
     
-    return parser.parse_args()
+    parser.add_argument("--local-only", action="store_true", help="Use local inference without INTEL/notification adapters")
+    parser.add_argument("--project-db", type=Path, help="Attach an existing continuity database; enables local-only mode")
+    parser.add_argument("--project-id", help="Existing project to attach to this conversation")
+    parser.add_argument("--synapse-url", help="Optional loopback Synapse evidence API")
+    parser.add_argument("--collection-id", help="Owned Synapse collection UUID")
+    parser.add_argument("--require-source", action="append", default=[], help="Required evidence source ID; repeat as needed")
+    parser.add_argument("--context-budget", type=int, default=16000, help="Maximum serialized context characters (1000–16000)")
+    args = parser.parse_args(argv)
+    if bool(args.project_db) != bool(args.project_id):
+        parser.error("--project-db and --project-id must be supplied together")
+    if (args.synapse_url or args.collection_id or args.require_source or args.context_budget != 16000) and not args.project_db:
+        parser.error("context options require --project-db and --project-id")
+    if bool(args.synapse_url) != bool(args.collection_id):
+        parser.error("--synapse-url and --collection-id must be supplied together")
+    return args
 
 
 def show_banner() -> None:
@@ -232,7 +247,14 @@ def main() -> int:
     logger.info("eaon_starting", mode=args.mode, version=settings.version)
     
     # Create orchestrator
-    orchestrator = Orchestrator()
+    try:
+        context = (ProjectContext(args.project_db, args.project_id, budget_chars=args.context_budget,
+                   synapse_url=args.synapse_url, collection_id=args.collection_id,
+                   required_source_ids=tuple(args.require_source)) if args.project_db else None)
+    except ProjectContextError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    orchestrator = Orchestrator(local_only=args.local_only or context is not None, context_session=context)
     
     # Set initial mode if specified
     if args.mode != "normal":
