@@ -1,0 +1,35 @@
+name: Causality Lab
+on:
+  pull_request:
+    paths:
+      - 'modules/reality_debugger/causality_lab/**'
+      - '.github/workflows/causality-lab.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'modules/reality_debugger/causality_lab/**'
+      - '.github/workflows/causality-lab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.11', '3.12']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install './modules/reality_debugger/causality_lab[test,plots]'
+      - run: python -m pytest modules/reality_debugger/causality_lab/tests -q --basetemp .pytest-causality
+      - run: eaon-causality --seed 42 --plots --output runs/causality-exp4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: causality-exp4-${{ matrix.os }}-py${{ matrix.python }}
+          path: runs/causality-exp4/
