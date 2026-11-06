@@ -24,6 +24,8 @@ from .inference_gateway import InferenceGateway
 from .ollama_client import OllamaError, chat as ollama_chat
 from .router import Router
 from .telemetry import TelemetryRecorder, TurnEvent
+from .project_context import ProjectContext, ProjectContextError
+from .ollama_client import MAX_PROMPT_CHARS
 
 logger = get_logger("orchestrator")
 audit = AuditLogger()
@@ -60,6 +62,7 @@ class ExecutionReport:
     inference_time_ms: float = 0
     tokens_in: int = 0
     tokens_out: int = 0
+    context_summary: dict | None = None
 
 
 @dataclass
@@ -85,7 +88,11 @@ class Orchestrator:
     """
     
     def __init__(self, *, local_only: bool = False,
-                 telemetry: TelemetryRecorder | None = None):
+                 telemetry: TelemetryRecorder | None = None,
+                 context_session: ProjectContext | None = None):
+        if context_session is not None and not local_only:
+            raise ProjectContextError("context_requires_local_mode")
+        self.context_session = context_session
         self.settings = get_settings()
         self.orch_config = self.settings.orchestrator
         self.local_only = local_only
@@ -159,21 +166,45 @@ class Orchestrator:
             raise ValueError("invalid_input_source")
         self._request_count += 1
         start_time = time.perf_counter()
+        bound = self.context_session
+        snapshot, context_error = None, None
+        if bound is not None:
+            if not self.local_only:
+                context_error = "context_requires_local_mode"
+            elif not isinstance(prompt, str) or not 0 < len(prompt.strip()) <= MAX_PROMPT_CHARS:
+                context_error = "invalid_prompt"
+            else:
+                try:
+                    snapshot = bound.prepare(prompt)
+                except ProjectContextError as exc:
+                    context_error = str(exc)
         
         # Step 1: Extract IPs and enrich with INTEL
-        intel_ctx = IntelContext() if self.local_only else self._enrich_intel(prompt)
+        intel_ctx = IntelContext() if self.local_only or bound is not None else self._enrich_intel(prompt)
         
         # Step 2: Adjust mode based on risk
         self._adjust_mode_for_risk(intel_ctx)
         
         # Step 3: Route request
-        decision = self._route(prompt, intel_ctx)
+        decision = self._route(prompt if isinstance(prompt, str) else "", intel_ctx)
         
         # Step 4: Execute
-        report = self._execute(prompt, decision, history=history)
+        if context_error:
+            self._error_count += 1
+            report = ExecutionReport(ok=False, error=context_error, model_used=decision.model)
+        elif snapshot is not None:
+            report = self._execute(prompt, decision, history=history, project_context=snapshot.serialized)
+            report.context_summary = {**snapshot.summary, "memory_use": {
+                "memory_delivered": True if report.ok else None,
+                "memory_cited": None, "memory_changed_decision": None,
+                "memory_effect": None, "memory_redundant": None,
+                "evaluation_method": "delivery_only; model response received" if report.ok else "delivery_unconfirmed",
+            }}
+        else:
+            report = self._execute(prompt, decision, history=history)
         
         # Step 5: Post-process (notifications, logging)
-        if not self.local_only:
+        if not self.local_only and bound is None:
             self._post_process(prompt, decision, report, intel_ctx)
 
         total_time = (time.perf_counter() - start_time) * 1000
@@ -294,7 +325,7 @@ class Orchestrator:
         return self.router.route(prompt).intent
     
     def _execute(self, prompt: str, decision: RoutingDecision,
-                 history: list[dict] | None = None) -> ExecutionReport:
+                 history: list[dict] | None = None, *, project_context: str | None = None) -> ExecutionReport:
         """
         Dispatch the authorized model ID; never fabricate a fallback response.
         """
@@ -302,8 +333,8 @@ class Orchestrator:
         
         try:
             gateway = InferenceGateway({
-                "llama3": lambda request: self._call_llama(request, decision, history),
-                "mistral": lambda request: self._call_mistral(request, decision, history),
+                "llama3": lambda request: self._call_llama(request, decision, history, project_context=project_context),
+                "mistral": lambda request: self._call_mistral(request, decision, history, project_context=project_context),
             })
             output = gateway.dispatch(decision.model, prompt)
             
@@ -322,6 +353,7 @@ class Orchestrator:
                 "unknown_model_id", "invalid_prompt", "model_missing", "ollama_unavailable",
                 "ollama_http_error", "ollama_invalid_response", "empty_model_response",
                 "llama3_unavailable", "mistral_unavailable",
+                "context_invalid_payload", "context_budget_exceeded",
             }
             error = str(e) if str(e) in known_errors else "execution_error"
             logger.error("execution_error", error=error, error_type=type(e).__name__,
@@ -335,20 +367,22 @@ class Orchestrator:
             )
     
     def _call_llama(self, prompt: str, decision: RoutingDecision,
-                    history: list[dict] | None = None) -> str:
+                    history: list[dict] | None = None, *, project_context: str | None = None) -> str:
         """Call Llama model via Ollama."""
         try:
-            return ollama_chat("llama3", prompt, history, timeout=self.orch_config.timeout_seconds)
+            options = {"project_context": project_context} if project_context is not None else {}
+            return ollama_chat("llama3", prompt, history, timeout=self.orch_config.timeout_seconds, **options)
         except OllamaError as exc:
             if str(exc) == "ollama_unavailable":
                 raise RuntimeError("llama3_unavailable") from exc
             raise
     
     def _call_mistral(self, prompt: str, decision: RoutingDecision,
-                      history: list[dict] | None = None) -> str:
+                      history: list[dict] | None = None, *, project_context: str | None = None) -> str:
         """Call Mistral model via Ollama."""
         try:
-            return ollama_chat("mistral", prompt, history, timeout=self.orch_config.timeout_seconds)
+            options = {"project_context": project_context} if project_context is not None else {}
+            return ollama_chat("mistral", prompt, history, timeout=self.orch_config.timeout_seconds, **options)
         except OllamaError as exc:
             if str(exc) == "ollama_unavailable":
                 raise RuntimeError("mistral_unavailable") from exc

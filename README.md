@@ -71,6 +71,12 @@ python scripts/run_module.py kernel --db data/continuity.db recover demo
 Use a new database path for `init`. See the [operating guide](docs/CONTINUITY_KERNEL.md)
 for revisions, checkpoints, memory providers and the Synapse evidence boundary.
 
+To use an existing project in local conversation, start Ollama and run
+`python main.py --project-db data/continuity.db --project-id demo`.
+The UI's **Proiect** form attaches the same store explicitly. Each turn rereads
+verified state; switching or detaching clears previous chat and voice drafts.
+The conversation does not write to the journal automatically.
+
 ## Recovered components
 
 | Component | Location | What exists |
@@ -134,8 +140,9 @@ or real-world safety.
 
 The local continuity kernel now provides confirmed memory, hypotheses and
 unknowns, project state cards, one active goal, bounded tasks, evidence retrieval
-and explicit verification/checkpoints. Connecting every module and the voice/UI
-workflow to that kernel remains further integration work.
+and explicit verification/checkpoints. The root CLI and voice/chat UI can attach
+a project for each local conversation. Connecting the remaining independent
+modules to that kernel remains further integration work.
 
 The [voice/interlock protocol](docs/topics/VOICE_AND_SAFETY.md),
 [memory design](docs/topics/MEMORY_AND_CONTINUITY.md),

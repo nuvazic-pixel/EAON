@@ -82,6 +82,11 @@ system attack or SDK evaluation was performed in consolidation.
 
 ## Related external projects
 
+The [6 November orchestration brief](../briefs/2026-11-06.md) records verified
+primary references, implementation status and acceptance criteria for target
+provenance, infeasible goals, memory utilization, tool dependencies and runtime
+replay. Research results are not measurements of EAON or the user's hardware.
+
 FTQC Architecture Digital Twin v0.1/v0.2 exists as separate deliverables. Quantum
 gates, surface-code assumptions, magic-state factories, routing, persistent in-flight
 reservations and later finite-buffer/backpressure discussions belong to that
