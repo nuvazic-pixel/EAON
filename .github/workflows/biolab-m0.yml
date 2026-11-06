@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/biolab-m0-foundation
+      - feature/biolab-m1-experiment-engine
     paths:
       - "modules/biolab/**"
       - "scripts/run_module.py"
@@ -44,3 +45,5 @@ jobs:
         run: python -m pytest tests -v
       - name: Run deterministic synthetic smoke test
         run: python scripts/run_module.py biolab smoke --count 100
+      - name: Run M1 experiment report
+        run: python scripts/run_module.py biolab experiment --count 100
