@@ -90,11 +90,11 @@ def install(root=ROOT, *, voice=False, download_voice_model=False, runner=subpro
         raise SetupError("invalid_installation_profile")
     python = ensure_environment(root, runner=runner)
     try:
-        runner([str(python), "-I", "-m", "pip", "--isolated", "install", "--require-virtualenv",
+        runner([str(python), "-I", "-X", "utf8", "-m", "pip", "--isolated", "install", "--require-virtualenv",
                 "--disable-pip-version-check", "--no-input", "-r", str(requirements)],
                cwd=root, env=local_environment(), check=True)
         if download_voice_model:
-            runner([str(python), "-I", str(root / "scripts/setup_voice_model.py")],
+            runner([str(python), "-I", "-X", "utf8", str(root / "scripts/setup_voice_model.py")],
                    cwd=root, env=local_environment(), check=True)
     except (OSError, subprocess.SubprocessError):
         raise SetupError("dependency_or_model_installation_failed") from None

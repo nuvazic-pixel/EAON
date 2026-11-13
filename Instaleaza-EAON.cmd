@@ -7,7 +7,7 @@ if errorlevel 1 (
   if not "%EAON_NO_PAUSE%"=="1" pause
   exit /b 1
 )
-py -3.12 "%~dp0scripts\setup_local.py" %*
+py -3.12 -X utf8 "%~dp0scripts\setup_local.py" %*
 set "EAON_EXIT=%ERRORLEVEL%"
 if not "%EAON_NO_PAUSE%"=="1" pause
 exit /b %EAON_EXIT%

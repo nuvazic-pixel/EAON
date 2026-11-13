@@ -6,7 +6,7 @@ if not exist "%~dp0.venv\Scripts\python.exe" (
   if not "%EAON_NO_PAUSE%"=="1" pause
   exit /b 1
 )
-"%~dp0.venv\Scripts\python.exe" -I "%~dp0scripts\launch_local.py" %*
+"%~dp0.venv\Scripts\python.exe" -I -X utf8 "%~dp0scripts\launch_local.py" %*
 set "EAON_EXIT=%ERRORLEVEL%"
 if not "%EAON_NO_PAUSE%"=="1" pause
 exit /b %EAON_EXIT%

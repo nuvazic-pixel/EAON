@@ -99,7 +99,7 @@ def test_existing_config_and_database_are_never_overwritten(tmp_path, synthetic_
     assert result["env_file_created"] is False
     assert env.read_text() == "SYNAPSE_TOKEN=private-sentinel\n"
     assert database.read_bytes() == b"preserved fixture"
-    assert calls[-1][:6] == [str(setup.environment_python(tmp_path)), "-I", "-m", "pip", "--isolated", "install"]
+    assert calls[-1][:8] == [str(setup.environment_python(tmp_path)), "-I", "-X", "utf8", "-m", "pip", "--isolated", "install"]
     assert "--require-virtualenv" in calls[-1] and str(tmp_path / "requirements-desktop.txt") in calls[-1]
     assert not any("setup_voice_model.py" in value for command in calls for value in command)
     assert "private-sentinel" not in json.dumps(result)
@@ -137,7 +137,7 @@ def test_voice_model_download_is_explicit_and_uses_project_interpreter(tmp_path,
         commands.append(command)
         return probe_result(tmp_path)
     setup.install(tmp_path, voice=True, download_voice_model=True, runner=runner)
-    assert commands[-1] == [str(setup.environment_python(tmp_path)), "-I", str(tmp_path / "scripts/setup_voice_model.py")]
+    assert commands[-1] == [str(setup.environment_python(tmp_path)), "-I", "-X", "utf8", str(tmp_path / "scripts/setup_voice_model.py")]
 
 
 def test_launcher_environment_overrides_external_adapters_without_mutating_original():
@@ -222,8 +222,8 @@ def test_launch_command_is_loopback_and_paths_are_separate_arguments(tmp_path):
     root = tmp_path / "EAON with spaces"
     executable = root / ".venv/Scripts/python.exe"
     command = launch_command(root, executable, 8502)
-    assert command[0:5] == [str(executable), "-I", "-m", "streamlit", "run"]
-    assert command[5] == str(root / "ui/app.py")
+    assert command[0:7] == [str(executable), "-I", "-X", "utf8", "-m", "streamlit", "run"]
+    assert command[7] == str(root / "ui/app.py")
     assert command[command.index("--server.address") + 1] == "127.0.0.1"
     assert command[command.index("--server.port") + 1] == "8502"
 

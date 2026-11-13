@@ -14,7 +14,7 @@ from setup_local import MESSAGES, SetupError, local_environment, validate_enviro
 
 
 def launch_command(root, python, port=8501):
-    return [str(python), "-I", "-m", "streamlit", "run", str(Path(root) / "ui/app.py"),
+    return [str(python), "-I", "-X", "utf8", "-m", "streamlit", "run", str(Path(root) / "ui/app.py"),
             "--server.address", "127.0.0.1", "--server.port", str(port),
             "--browser.gatherUsageStats", "false", "--server.fileWatcherType", "none"]
 
