@@ -11,6 +11,7 @@ from core.inference_gateway import InferenceGateway, ModelDispatchError
 from core.orchestrator import ExecutionReport, IntelContext, Orchestrator, Priority, RoutingDecision
 from core.ollama_client import OllamaError, chat
 from core.telemetry import TelemetryRecorder
+from core.voice_state import TranscriptDraft, commit_transcript
 
 
 def decision(model):
@@ -98,8 +99,9 @@ class GatewayTests(unittest.TestCase):
             with patch("core.ollama_client._request", side_effect=model_response), \
                     patch.object(orchestrator, "_enrich_intel") as intel, \
                     patch.object(orchestrator, "_post_process") as external:
-                decision, report = orchestrator.run(
-                    "Cum tratez un atac? PRIVATE_SENTINEL", source="voice", stt_ms=12.5)
+                committed = commit_transcript(TranscriptDraft("Cum tratez un atac? PRIVATE_SENTINEL", 1, final=True),
+                                             user_confirmed=True, activation="explicit_submit", arguments_stable=True)
+                decision, report = orchestrator.run_voice(committed, stt_ms=12.5)
                 self.assertTrue(report.ok)
                 self.assertEqual(decision.intent, "security")
                 self.assertEqual(decision.model, "mistral")
@@ -137,6 +139,8 @@ class GatewayTests(unittest.TestCase):
             self.assertEqual(set(events[0]), {
                 "request_id", "source", "intent", "model", "mode", "ok",
                 "error_code", "total_ms", "inference_ms", "stt_ms", "timestamp",
+                "final_output_origin", "previous_model", "model_switched", "switch_latency_ms",
+                "cache_warm", "prefix_hit", "model_residency",
             })
 
     def test_cli_interactive_keeps_bounded_turn_context(self):

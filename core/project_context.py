@@ -64,6 +64,8 @@ class ProjectContext:
 
     def prepare(self, query):
         card = self.project_card()
+        if card.get("blocked_memories"):
+            raise ProjectContextError("context_state_contaminated")
         # Completed-task and goal history is inspectable in the kernel, not chat context.
         project = {key: card[key] for key in ("project_id", "title", "owner_id", "active_goal", "next_task", "memories", "journal_head", "event_count")}
         envelope = {"schema": "eaon.project-context.v1", "project": project,

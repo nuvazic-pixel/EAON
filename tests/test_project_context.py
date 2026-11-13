@@ -14,6 +14,7 @@ from core.orchestrator import Orchestrator
 from core.ollama_client import OllamaError, _request, chat
 from core.project_context import ProjectContext, ProjectContextError
 from core.telemetry import TelemetryRecorder
+from core.voice_state import TranscriptDraft, commit_transcript
 from eaon_kernel import ContinuityKernel, SourceRef
 
 
@@ -114,7 +115,9 @@ def test_corrupt_or_deleted_store_stops_before_model_or_external_adapters(projec
     with patch("core.ollama_client._request") as model, \
             patch.object(orchestrator, "_enrich_intel") as intel, \
             patch.object(orchestrator, "_post_process") as external:
-        _, report = orchestrator.run("Salut", source="voice", stt_ms=8)
+        committed = commit_transcript(TranscriptDraft("Salut", 1, final=True),
+                                     user_confirmed=True, activation="explicit_submit", arguments_stable=True)
+        _, report = orchestrator.run_voice(committed, stt_ms=8)
     assert not report.ok and report.error == "context_integrity_failed"
     assert report.output_text is None
     model.assert_not_called()
@@ -133,7 +136,9 @@ def test_source_instructions_cannot_reroute_notify_or_append(project, tmp_path, 
     with patch("core.ollama_client._request", return_value={"message": {"content": "Local response"}}) as model, \
             patch.object(orchestrator, "_enrich_intel") as intel, \
             patch.object(orchestrator, "_post_process") as external:
-        decision, report = orchestrator.run("Salut", history=history, source=source)
+        committed = (commit_transcript(TranscriptDraft("Salut", 1, final=True),
+                     user_confirmed=True, activation="explicit_submit", arguments_stable=True) if source == "voice" else None)
+        decision, report = orchestrator.run("Salut", history=history, source=source, voice_commit=committed)
     assert report.ok and decision.model == "llama3"
     messages = model.call_args.args[1]["messages"]
     assert messages[1:3] == history
@@ -167,7 +172,8 @@ def test_context_and_model_text_never_enter_telemetry(project, tmp_path):
     event = json.loads(raw)
     assert event["ok"] is True
     assert set(event) == {"request_id", "source", "intent", "model", "mode", "ok", "error_code",
-                          "total_ms", "inference_ms", "stt_ms", "timestamp"}
+                          "total_ms", "inference_ms", "stt_ms", "timestamp", "final_output_origin",
+                          "previous_model", "model_switched", "switch_latency_ms", "cache_warm", "prefix_hit", "model_residency"}
 
 
 def test_append_during_retrieval_rejects_a_mixed_project_snapshot(project):

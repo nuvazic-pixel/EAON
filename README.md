@@ -14,7 +14,19 @@ not yet one fully integrated assistant.
 
 ## Local run on Windows
 
-From PowerShell after cloning or pulling `main`:
+Extract the complete reviewed desktop package into its own folder, then open
+**Instaleaza-EAON.cmd**, followed by **Porneste-EAON.cmd**. It selects Python
+3.12, installs a local `.venv` and starts a loopback text/project UI. Voice is
+optional. Existing configuration and databases are preserved; projects, explicit
+memory edits, verified backups and restore-to-new-file controls are in the UI.
+See [Romanian installation instructions](docs/LOCAL_INSTALL.md).
+
+The [13 November brief](docs/briefs/2026-11-13.md) maps implemented traced memory,
+counterevidence, voice admission and mock workflows to their research sources
+and limits. [Evidence cards](docs/EVIDENCE_CARDS.md) preserve v1 journal history
+while new events use policy v2.
+
+For manual development setup in a checkout containing this version:
 
 ```powershell
 py -3.12 -m venv .venv

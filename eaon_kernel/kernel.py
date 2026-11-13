@@ -12,10 +12,12 @@ import sqlite3
 from .contracts import ConflictError, IntegrityError, SourceRef, ValidationError, text
 
 
-POLICY = {"version": "eaon.continuity.v1", "confirmed_requires_sources": True,
+LEGACY_POLICY = {"version": "eaon.continuity.v1", "confirmed_requires_sources": True,
           "single_active_goal": True, "max_pending_tasks": 100,
           "owner_scope": "project", "source_digest": "captured_text_sha256",
           "memory_states": ["confirmed", "hypothesis", "unknown"]}
+POLICY = {**LEGACY_POLICY, "version": "eaon.continuity.v2", "procedural_requires_trace": True,
+          "counterevidence_control": "typed_claim_quarantine_then_explicit_restore"}
 
 
 def canonical(value) -> str:
@@ -23,6 +25,8 @@ def canonical(value) -> str:
 
 
 POLICY_HASH = sha256(canonical(POLICY).encode()).hexdigest()
+POLICY_HASHES = {LEGACY_POLICY["version"]: sha256(canonical(LEGACY_POLICY).encode()).hexdigest(), POLICY["version"]: POLICY_HASH}
+CARD_EVENTS = {"memory.card.recorded", "memory.contradicted", "memory.restored"}
 
 
 def event_hash(seq: int, kind: str, payload: str, previous: str) -> str:
@@ -38,7 +42,7 @@ def _id(value, label="identifier") -> str:
     return text(value, label, 200)
 
 
-def _apply(state: dict, kind: str, data: dict) -> None:
+def _apply(state: dict, kind: str, data: dict, policy_version=POLICY["version"]) -> None:
     if type(data) is not dict:
         raise ValidationError("Event data must be an object")
     project_id = _id(data.get("project_id"), "project_id")
@@ -55,7 +59,12 @@ def _apply(state: dict, kind: str, data: dict) -> None:
     if project_id not in state:
         raise ValidationError("Unknown project")
     project = state[project_id]
-    if kind == "goal.started":
+    if kind in CARD_EVENTS:
+        if policy_version != POLICY["version"]:
+            raise ValidationError("Traced memory events require policy v2")
+        from .cards import apply_card_event
+        apply_card_event(project, kind, data)
+    elif kind == "goal.started":
         _fields(data, {"project_id", "goal_id", "text"})
         goal_id = _id(data["goal_id"], "goal_id")
         text(data["text"], "goal text")
@@ -94,6 +103,8 @@ def _apply(state: dict, kind: str, data: dict) -> None:
     elif kind == "memory.recorded":
         _fields(data, {"project_id", "key", "text", "status", "sources", "expected_revision"})
         key = _id(data["key"], "memory key")
+        if policy_version == POLICY["version"] and key.startswith("skill:"):
+            raise ValidationError("Procedural memory requires an evidence-linked MemoryCard")
         text(data["text"], "memory text")
         if type(data["status"]) is not str or data["status"] not in POLICY["memory_states"]:
             raise ValidationError("Unknown memory status")
@@ -108,6 +119,10 @@ def _apply(state: dict, kind: str, data: dict) -> None:
         if expected is not None and (type(expected) is not int or expected < 1):
             raise ValidationError("expected_revision must be a positive integer")
         prior = project["memories"].get(key)
+        if prior and "card" in prior:
+            raise ConflictError("Update a traced card with the traced memory API")
+        if prior and prior["lifecycle"] == "quarantined":
+            raise ConflictError("Contaminated state requires explicit restoration or revocation")
         if (prior and expected != prior["revision"]) or (not prior and expected is not None):
             raise ConflictError("Memory changed or exists; provide its current expected_revision explicitly")
         project["memories"][key] = {"text": data["text"], "status": data["status"],
@@ -123,6 +138,11 @@ def _apply(state: dict, kind: str, data: dict) -> None:
         if prior["lifecycle"] == "revoked":
             raise ConflictError("Memory is already revoked")
         prior.update(lifecycle="revoked", revision=prior["revision"] + 1, revocation_reason=data["reason"])
+        if "card" in prior:
+            prior["card"]["revocation_state"] = "revoked"
+        if prior.get("incident", {}).get("state_contaminated"):
+            prior["incident"].update(state_contaminated=False, state_restored=True,
+                                     resolution="explicit_revocation", final_output_origin="kernel:memory.revoked")
     elif kind == "checkpoint":
         _fields(data, {"project_id", "state_hash"})
         digest = sha256(canonical(project).encode("utf-8")).hexdigest()
@@ -177,7 +197,7 @@ class ContinuityKernel:
 
     @staticmethod
     def _replay(db):
-        state, previous, count = {}, "GENESIS", 0
+        state, previous, count, policy_epoch = {}, "GENESIS", 0, 1
         try:
             meta = dict(db.execute("SELECT key, value FROM meta").fetchall())
             if set(meta) != {"schema_version", "event_count", "head_hash"} or meta["schema_version"] != "0.1":
@@ -193,9 +213,13 @@ class ContinuityKernel:
                 if canonical(payload) != row["payload"] or payload["schema"] != "eaon.kernel.event.v1":
                     raise IntegrityError("Invalid event serialization")
                 stamp = datetime.fromisoformat(payload["timestamp"])
-                if stamp.tzinfo is None or payload["policy_version"] != POLICY["version"] or payload["policy_sha256"] != POLICY_HASH:
+                if stamp.tzinfo is None or payload["policy_version"] not in POLICY_HASHES or payload["policy_sha256"] != POLICY_HASHES[payload["policy_version"]]:
                     raise IntegrityError("Event time or policy binding is invalid")
-                _apply(state, row["kind"], payload["data"])
+                epoch = 2 if payload["policy_version"] == POLICY["version"] else 1
+                if epoch < policy_epoch:
+                    raise IntegrityError("Journal policy cannot downgrade after a v2 event")
+                policy_epoch = epoch
+                _apply(state, row["kind"], payload["data"], payload["policy_version"])
                 previous = row["hash"]
             if meta["event_count"] != str(count) or meta["head_hash"] != previous:
                 raise IntegrityError("Journal was truncated or metadata does not match its head")
@@ -251,8 +275,30 @@ class ContinuityKernel:
     def context_card(self, project_id):
         """Reasoning view excludes revoked records; recover remains an inspector."""
         card = self.recover(project_id)
+        card["blocked_memories"] = sorted(key for key, value in card["memories"].items() if value["lifecycle"] == "quarantined")
         card["memories"] = {key: value for key, value in card["memories"].items() if value["lifecycle"] == "active"}
         return card
+
+    def record_memory_card(self, project_id, key, card, status="hypothesis", expected_revision=None):
+        from .cards import MemoryCard
+        if not isinstance(card, MemoryCard):
+            raise ValidationError("An explicit MemoryCard is required")
+        return self._append("memory.card.recorded", {"project_id": project_id, "key": key, "card": card.to_dict(),
+                            "status": status, "expected_revision": expected_revision})
+
+    def report_counterevidence(self, project_id, key, counterevidence, expected_revision, fault_origin):
+        from .cards import MemoryCard
+        if not isinstance(counterevidence, MemoryCard):
+            raise ValidationError("Counterevidence requires a traced MemoryCard")
+        return self._append("memory.contradicted", {"project_id": project_id, "key": key, "counterevidence": counterevidence.to_dict(),
+                            "expected_revision": expected_revision, "fault_origin": fault_origin})
+
+    def restore_memory_card(self, project_id, key, card, expected_revision, reason, status="hypothesis"):
+        from .cards import MemoryCard
+        if not isinstance(card, MemoryCard):
+            raise ValidationError("Restoration requires a traced MemoryCard")
+        return self._append("memory.restored", {"project_id": project_id, "key": key, "card": card.to_dict(),
+                            "status": status, "expected_revision": expected_revision, "reason": reason})
 
     def checkpoint(self, project_id):
         # State may change between these transactions: the append's replay then
