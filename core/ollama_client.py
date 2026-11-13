@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 import urllib.error
 import urllib.request
 from .project_context import MAX_CONTEXT_CHARS
@@ -66,7 +67,7 @@ def installed_models() -> set[str]:
 
 
 def chat(model: str, prompt: str, history: list[dict] | None = None, *, timeout: int = 30,
-         project_context: str | None = None) -> str:
+         project_context: str | None = None, observer=None) -> str:
     """Send bounded text history; never forward tool messages or UI metadata."""
     if model not in MODEL_NAMES:
         raise OllamaError("unknown_model_id")
@@ -108,4 +109,15 @@ def chat(model: str, prompt: str, history: list[dict] | None = None, *, timeout:
         raise OllamaError("ollama_invalid_response")
     if not message["content"].strip():
         raise OllamaError("empty_model_response")
-    return message["content"].strip()
+    reported = result.get("model")
+    if reported is not None and (type(reported) is not str or reported.split(":", 1)[0] != model):
+        raise OllamaError("model_identity_mismatch")
+    output = message["content"].strip()
+    if observer is not None:
+        duration = lambda key: result.get(key) if type(result.get(key)) is int and result[key] >= 0 else None
+        observer({"backend": "ollama", "requested_model": model, "reported_model": reported,
+                  "response_sha256": sha256(output.encode("utf-8")).hexdigest(),
+                  "origin": "ollama:" + model, "load_duration_ns": duration("load_duration"),
+                  "prompt_eval_duration_ns": duration("prompt_eval_duration"), "total_duration_ns": duration("total_duration"),
+                  "cache_warm": None, "prefix_hit": None, "model_residency": None})
+    return output

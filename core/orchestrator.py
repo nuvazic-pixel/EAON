@@ -6,6 +6,7 @@ Central decision engine with INTEL-aware routing and mode switching.
 
 import time
 import uuid
+from hashlib import sha256
 from typing import Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -26,6 +27,7 @@ from .router import Router
 from .telemetry import TelemetryRecorder, TurnEvent
 from .project_context import ProjectContext, ProjectContextError
 from .ollama_client import MAX_PROMPT_CHARS
+from .voice_state import CommittedTranscript, VoiceStateError
 
 logger = get_logger("orchestrator")
 audit = AuditLogger()
@@ -63,6 +65,8 @@ class ExecutionReport:
     tokens_in: int = 0
     tokens_out: int = 0
     context_summary: dict | None = None
+    final_output_origin: dict | None = None
+    routing_observation: dict | None = None
 
 
 @dataclass
@@ -109,6 +113,7 @@ class Orchestrator:
         # Stats
         self._request_count = 0
         self._error_count = 0
+        self._last_successful_model = None
         
         logger.info(
             "orchestrator_init",
@@ -152,7 +157,8 @@ class Orchestrator:
                 notifier.notify_mode_change(old_mode, new_mode, reason)
     
     def run(self, prompt: str, *, history: list[dict] | None = None,
-            source: str = "cli", stt_ms: float | None = None) -> Tuple[RoutingDecision, ExecutionReport]:
+            source: str = "cli", stt_ms: float | None = None,
+            voice_commit: CommittedTranscript | None = None) -> Tuple[RoutingDecision, ExecutionReport]:
         """
         Main entry point: route and execute prompt.
         
@@ -168,7 +174,14 @@ class Orchestrator:
         start_time = time.perf_counter()
         bound = self.context_session
         snapshot, context_error = None, None
-        if bound is not None:
+        if source == "voice":
+            try:
+                if type(voice_commit) is not CommittedTranscript:
+                    raise VoiceStateError("voice_uncommitted")
+                voice_commit.validate(prompt)
+            except VoiceStateError:
+                context_error = "voice_uncommitted"
+        if bound is not None and context_error is None:
             if not self.local_only:
                 context_error = "context_requires_local_mode"
             elif not isinstance(prompt, str) or not 0 < len(prompt.strip()) <= MAX_PROMPT_CHARS:
@@ -180,7 +193,7 @@ class Orchestrator:
                     context_error = str(exc)
         
         # Step 1: Extract IPs and enrich with INTEL
-        intel_ctx = IntelContext() if self.local_only or bound is not None else self._enrich_intel(prompt)
+        intel_ctx = IntelContext() if self.local_only or bound is not None or context_error else self._enrich_intel(prompt)
         
         # Step 2: Adjust mode based on risk
         self._adjust_mode_for_risk(intel_ctx)
@@ -202,9 +215,16 @@ class Orchestrator:
             }}
         else:
             report = self._execute(prompt, decision, history=history)
+        previous = self._last_successful_model
+        switched = previous is not None and previous != decision.model
+        report.routing_observation = {"previous_model": previous, "model_switched": switched,
+            "switch_latency_ms": report.inference_time_ms if report.ok and switched else None,
+            "cache_warm": None, "prefix_hit": None, "model_residency": None}
+        if report.ok:
+            self._last_successful_model = decision.model
         
         # Step 5: Post-process (notifications, logging)
-        if not self.local_only and bound is None:
+        if not self.local_only and bound is None and not context_error:
             self._post_process(prompt, decision, report, intel_ctx)
 
         total_time = (time.perf_counter() - start_time) * 1000
@@ -213,6 +233,8 @@ class Orchestrator:
             model=decision.model, mode=decision.mode, ok=report.ok,
             error=report.error, total_ms=total_time,
             inference_ms=report.inference_time_ms, stt_ms=stt_ms,
+            final_output_origin=report.final_output_origin.get("origin") if report.final_output_origin else None,
+            routing_observation=report.routing_observation,
         )
         try:
             self.telemetry.record(event)
@@ -229,6 +251,12 @@ class Orchestrator:
         )
         
         return decision, report
+
+    def run_voice(self, committed, *, history=None, stt_ms=None):
+        if type(committed) is not CommittedTranscript:
+            raise VoiceStateError("voice_uncommitted")
+        committed.validate()
+        return self.run(committed.text, history=history, source="voice", stt_ms=stt_ms, voice_commit=committed)
     
     def _enrich_intel(self, prompt: str) -> IntelContext:
         """Extract IPs and enrich with threat intelligence."""
@@ -330,11 +358,12 @@ class Orchestrator:
         Dispatch the authorized model ID; never fabricate a fallback response.
         """
         start_time = time.perf_counter()
+        observations = []
         
         try:
             gateway = InferenceGateway({
-                "llama3": lambda request: self._call_llama(request, decision, history, project_context=project_context),
-                "mistral": lambda request: self._call_mistral(request, decision, history, project_context=project_context),
+                "llama3": lambda request: self._call_llama(request, decision, history, project_context=project_context, observation_sink=observations.append),
+                "mistral": lambda request: self._call_mistral(request, decision, history, project_context=project_context, observation_sink=observations.append),
             })
             output = gateway.dispatch(decision.model, prompt)
             
@@ -345,6 +374,9 @@ class Orchestrator:
                 output_text=output,
                 model_used=decision.model,
                 inference_time_ms=inference_time,
+                final_output_origin=(observations[-1] if observations else {"origin": "model_handler:" + decision.model,
+                    "requested_model": decision.model, "reported_model": None,
+                    "response_sha256": sha256(output.encode("utf-8")).hexdigest()}),
             )
         
         except Exception as e:
@@ -354,6 +386,7 @@ class Orchestrator:
                 "ollama_http_error", "ollama_invalid_response", "empty_model_response",
                 "llama3_unavailable", "mistral_unavailable",
                 "context_invalid_payload", "context_budget_exceeded",
+                "model_identity_mismatch",
             }
             error = str(e) if str(e) in known_errors else "execution_error"
             logger.error("execution_error", error=error, error_type=type(e).__name__,
@@ -367,10 +400,12 @@ class Orchestrator:
             )
     
     def _call_llama(self, prompt: str, decision: RoutingDecision,
-                    history: list[dict] | None = None, *, project_context: str | None = None) -> str:
+                    history: list[dict] | None = None, *, project_context: str | None = None, observation_sink=None) -> str:
         """Call Llama model via Ollama."""
         try:
             options = {"project_context": project_context} if project_context is not None else {}
+            if observation_sink is not None:
+                options["observer"] = observation_sink
             return ollama_chat("llama3", prompt, history, timeout=self.orch_config.timeout_seconds, **options)
         except OllamaError as exc:
             if str(exc) == "ollama_unavailable":
@@ -378,10 +413,12 @@ class Orchestrator:
             raise
     
     def _call_mistral(self, prompt: str, decision: RoutingDecision,
-                      history: list[dict] | None = None, *, project_context: str | None = None) -> str:
+                      history: list[dict] | None = None, *, project_context: str | None = None, observation_sink=None) -> str:
         """Call Mistral model via Ollama."""
         try:
             options = {"project_context": project_context} if project_context is not None else {}
+            if observation_sink is not None:
+                options["observer"] = observation_sink
             return ollama_chat("mistral", prompt, history, timeout=self.orch_config.timeout_seconds, **options)
         except OllamaError as exc:
             if str(exc) == "ollama_unavailable":

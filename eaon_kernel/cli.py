@@ -43,6 +43,18 @@ def main(argv=None):
         commands.add_parser(name).add_argument("project_id")
     verify = commands.add_parser("verify")
     verify.add_argument("--expected-head")
+    for name in ("card", "counterevidence", "restore-card"):
+        traced = commands.add_parser(name)
+        traced.add_argument("project_id")
+        traced.add_argument("key")
+        traced.add_argument("card_file", type=Path, help="Explicit MemoryCard JSON with captured source trace and span")
+        traced.add_argument("--expected-revision", type=int, required=name != "card")
+        if name == "counterevidence":
+            traced.add_argument("--fault-origin", required=True)
+        else:
+            traced.add_argument("--status", choices=("confirmed", "hypothesis", "unknown"), default="hypothesis")
+        if name == "restore-card":
+            traced.add_argument("--reason", required=True)
     revoke = commands.add_parser("revoke")
     revoke.add_argument("project_id")
     revoke.add_argument("key")
@@ -86,6 +98,15 @@ def main(argv=None):
             result = kernel.checkpoint(args.project_id)
         elif args.command == "revoke":
             result = kernel.revoke_memory(args.project_id, args.key, args.expected_revision, args.reason)
+        elif args.command in {"card", "counterevidence", "restore-card"}:
+            from .cards import MemoryCard
+            card = MemoryCard.from_dict(json.loads(args.card_file.read_text(encoding="utf-8")))
+            if args.command == "card":
+                result = kernel.record_memory_card(args.project_id, args.key, card, args.status, args.expected_revision)
+            elif args.command == "counterevidence":
+                result = kernel.report_counterevidence(args.project_id, args.key, card, args.expected_revision, args.fault_origin)
+            else:
+                result = kernel.restore_memory_card(args.project_id, args.key, card, args.expected_revision, args.reason, args.status)
         elif args.command == "context":
             from .memory import KernelMemoryProvider, MemoryProviderRegistry, MemoryScope
             from .synapse import SynapseEvidenceProvider
@@ -102,7 +123,7 @@ def main(argv=None):
             result = kernel.verify(args.expected_head)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
-    except (ValidationError, IntegrityError, OSError) as exc:
+    except (ValidationError, IntegrityError, OSError, json.JSONDecodeError) as exc:
         print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1
 

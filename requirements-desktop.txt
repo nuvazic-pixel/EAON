@@ -1,0 +1,3 @@
+# Local text/project UI. Voice packages and model weights are optional.
+-r requirements-local.txt
+streamlit==1.64.0
